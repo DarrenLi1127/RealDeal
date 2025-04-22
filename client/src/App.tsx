@@ -7,12 +7,15 @@ import {
     UserButton
 } from '@clerk/clerk-react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ProfileGate from './user_profile/ProfileGate';
 import Dashboard from './routes/Dashboard';
 import UpdateProfile from './user_profile/UpdateProfile';
+import { ReactNode } from 'react';
 
 function App() {
     return (
         <div className="App">
+            {/* -------- Guest view -------- */}
             <SignedOut>
                 <div className="signed-out-container">
                     <h1>This is Real Deal!</h1>
@@ -21,44 +24,45 @@ function App() {
                 </div>
             </SignedOut>
 
+            {/* -------- Authenticated users -------- */}
             <SignedIn>
-                <BrowserRouter>
-                    <Routes>
-                        <Route index element={<Navigate to="/home" replace />} />
-                        <Route
-                            path="/home"
-                            element={
-                                <>
-                                    {/* top nav bar */}
-                                    <nav className="navbar">
-                                        <h1 className="logo">Real Deal</h1>
+                <ProfileGate>
+                    <BrowserRouter>
+                        <nav className="navbar">
+                            <h1 className="logo">Real Deal</h1>
+                            <div className="nav-right">
+                                <UserButton
+                                    userProfileUrl="/profile"
+                                    userProfileMode="navigation"
+                                />
+                                <SignOutButton />
+                            </div>
+                        </nav>
 
-                                        {/* clerk’s ready‑made avatar menu */}
-                                        <div className="nav‑right">
-                                            <UserButton
-                                                afterSignOutUrl="/"
-                                                userProfileMode="navigation"
-                                                userProfileUrl="/profile"
-                                            />
-                                        </div>
-                                    </nav>
-
-                                    <Dashboard />
-                                </>
-                            }
-                        />
-                        <Route path="/profile" element={<UpdateProfile />} />
-                        {/* catch‑all → dashboard */}
-                        <Route path="*" element={<Navigate to="/home" replace />} />
-                    </Routes>
-                </BrowserRouter>
-
-                <div className="global-signout">
-                    <SignOutButton />
-                </div>
+                        <Routes>
+                            <Route
+                                index
+                                element={<Navigate to="/home" replace /> as ReactNode}
+                            />
+                            <Route
+                                path="/home"
+                                element={<Dashboard /> as ReactNode}
+                            />
+                            <Route
+                                path="/profile"
+                                element={<UpdateProfile /> as ReactNode}
+                            />
+                            <Route
+                                path="*"
+                                element={<Navigate to="/home" replace /> as ReactNode}
+                            />
+                        </Routes>
+                    </BrowserRouter>
+                </ProfileGate>
             </SignedIn>
         </div>
     );
 }
 
 export default App;
+
