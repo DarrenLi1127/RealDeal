@@ -1,0 +1,42 @@
+.profile-edit {
+    max-width: 480px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.avatar-picker {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-preview {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ddd;
+}
+
+.avatar-button {
+    background: var(--clr-primary);
+    color: #fff;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.avatar-button:hover,
+.avatar-button:focus-visible {
+    background: var(--clr-primary-hover);
+}

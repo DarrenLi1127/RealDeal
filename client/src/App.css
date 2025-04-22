@@ -1,62 +1,68 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* ---------- Global Theme ---------- */
+:root {
+  --clr-bg: #f9f9f9;
+  --clr-surface: #ffffff;
+  --clr-primary: #4a90e2;
+  --clr-primary-hover: #3a75c4;
+  --clr-text: #2d3748;
+  --clr-text-light: #4a5568;
+  --clr-muted: #888;
+  --radius-md: 8px;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: 0.25s ease-in-out;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+  background: var(--clr-bg);
+  color: var(--clr-text);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* ---------- Root Wrapper ---------- */
+#root {
+  width: 100vw;           /* use the full viewport width */
+  min-height: 100vh;      /* fill the viewport height as well */
+  display: flex;
+  justify-content: center; /* center the white surface horizontally */
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-/* New styling for Real Deal app */
+/* ---------- App Shell ---------- */
 .App {
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-  min-height: 500px;
+  flex: 1;                        /* take all available width **/
+  background: var(--clr-surface);
+  box-shadow: var(--shadow-md);
+  border-radius: 0;               /* flush with edges; set to 12px if you prefer rounded */
+  padding: 2.5rem 4rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
+/* ---------- Generic Utility ---------- */
+button {
+  background: var(--clr-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+button:hover,
+button:focus-visible {
+  background: var(--clr-primary-hover);
+}
+
+/* ---------- Auth Views ---------- */
 .signed-out-container,
 .signed-in-container {
   display: flex;
@@ -66,15 +72,14 @@
 }
 
 h1 {
-  font-size: 2.4rem;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
+  font-size: 2.25rem;
+  margin: 0 0 0.5rem;
 }
 
 p {
   font-size: 1.1rem;
-  color: #4a5568;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem;
+  color: var(--clr-text-light);
 }
 
 .user-controls {
@@ -84,17 +89,55 @@ p {
   margin-top: 1rem;
 }
 
-button {
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
+/* ---------- Navigation ---------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
 }
 
-button:hover {
-  background-color: #3a75c4;
+.logo {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.25rem;
 }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ---------- Global Sign‑Out Button ---------- */
+.global-signout {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+}
+
+/* ---------- Cards & Misc. ---------- */
+.card {
+  background: var(--clr-surface);
+  border-radius: var(--radius-md);
+  padding: 2em;
+  box-shadow: var(--shadow-sm);
+}
+
+.read-the-docs {
+  color: var(--clr-muted);
+}
+
+/* ---------- Responsiveness ---------- */
+@media (max-width: 768px) {
+  .App {
+    padding: 2rem 1.5rem;
+  }
+  button,
+  .toolbar select,
+  .toolbar input {
+    width: 100%;
+  }
+}
+

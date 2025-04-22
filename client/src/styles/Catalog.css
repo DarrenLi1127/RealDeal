@@ -1,0 +1,116 @@
+/* -------------------------------------------------------------------------
+   Layout
+---------------------------------------------------------------------------*/
+.catalog {
+    width: 100%;
+    padding: 1rem 0 2.5rem;
+    text-align: left;
+}
+
+#catalog-heading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 1.25rem;
+}
+
+/* -------------------------------------------------------------------------
+   Toolbar (search + filters)
+---------------------------------------------------------------------------*/
+.toolbar {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.toolbar input,
+.toolbar select {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    transition: border-color 0.2s ease;
+}
+
+.toolbar input:focus,
+.toolbar select:focus {
+    outline: none;
+    border-color: var(--clr-primary);
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   Hint / count
+---------------------------------------------------------------------------*/
+.hint {
+    margin: 0.25rem 0 1rem;
+    color: var(--clr-text-light);
+    font-size: 0.95rem;
+}
+
+/* -------------------------------------------------------------------------
+   Review grid
+---------------------------------------------------------------------------*/
+.review-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.review-card {
+    background: var(--clr-surface);
+    border: 1px solid #e5e5e5;
+    border-radius: var(--radius-md);
+    padding: 1.15rem 1.35rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition);
+}
+
+.review-card:hover,
+.review-card:focus-within {
+    box-shadow: var(--shadow-md);
+}
+
+.review-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--clr-text);
+}
+
+.product-meta {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+    color: var(--clr-text-light);
+}
+
+.snippet {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--clr-text);
+}
+
+/* -------------------------------------------------------------------------
+   Accessibility utility (optional)
+---------------------------------------------------------------------------*/
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
