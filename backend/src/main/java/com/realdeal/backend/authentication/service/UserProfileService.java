@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import java.util.Optional;
 
 @Service
 public class UserProfileService {
@@ -49,4 +50,31 @@ public class UserProfileService {
     return userProfileRepository.save(userProfile);
   }
 
+  public UserProfile updateUserProfile(String userId, UserProfile updatedProfile) {
+    // First check if the user exists
+    Optional<UserProfile> existingUser = userProfileRepository.findById(userId);
+    if (!existingUser.isPresent()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + userId);
+    }
+
+    UserProfile currentProfile = existingUser.get();
+    
+    // Check if username is being changed and is already taken by another user
+    if (!currentProfile.getUsername().equals(updatedProfile.getUsername()) && 
+        userProfileRepository.existsByUsername(updatedProfile.getUsername())) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
+    }
+
+    // Update only allowed fields
+    currentProfile.setUsername(updatedProfile.getUsername());
+    
+    // Update profile image URL if provided
+    if (updatedProfile.getProfileImageUrl() != null && !updatedProfile.getProfileImageUrl().isEmpty()) {
+      currentProfile.setProfileImageUrl(updatedProfile.getProfileImageUrl());
+    }
+    
+    // Do not allow changing of: userId, email, reputation, reviewerLevel, createdAt
+
+    return userProfileRepository.save(currentProfile);
+  }
 }

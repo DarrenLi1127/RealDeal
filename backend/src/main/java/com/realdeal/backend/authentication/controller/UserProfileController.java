@@ -34,4 +34,16 @@ public class UserProfileController {
       throw e;
     }
   }
+  @PutMapping("/update/{userId}")
+  public ResponseEntity<UserProfile> updateUserProfile(
+      @PathVariable String userId,
+      @RequestBody UserProfile updatedProfile) {
+    try {
+      UserProfile updated = userProfileService.updateUserProfile(userId, updatedProfile);
+      return new ResponseEntity<>(updated, HttpStatus.OK);
+    } catch (Exception e) {
+      System.err.println("Error updating user profile: " + e.getMessage());
+      throw e;
+    }
+  }
 }
