@@ -10,7 +10,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProfileGate from './user_profile/ProfileGate';
 import Dashboard from './routes/Dashboard';
 import UpdateProfile from './user_profile/UpdateProfile';
-import { ReactNode } from 'react';
+import Profile from './user_profile/Profile';
 
 function App() {
     return (
@@ -26,43 +26,58 @@ function App() {
 
             {/* -------- Authenticated users -------- */}
             <SignedIn>
-                <ProfileGate>
-                    <BrowserRouter>
-                        <nav className="navbar">
-                            <h1 className="logo">Real Deal</h1>
-                            <div className="nav-right">
-                                <UserButton
-                                    userProfileUrl="/profile"
-                                    userProfileMode="navigation"
-                                />
-                                <SignOutButton />
-                            </div>
-                        </nav>
+                <BrowserRouter>
+                    {/* Registration route doesn't use ProfileGate */}
+                    <Routes>
+                        <Route
+                            path="/register"
+                            element={<Profile />}
+                        />
 
-                        <Routes>
-                            <Route
-                                index
-                                element={<Navigate to="/home" replace /> as ReactNode}
-                            />
-                            <Route
-                                path="/home"
-                                element={<Dashboard /> as ReactNode}
-                            />
-                            <Route
-                                path="/profile"
-                                element={<UpdateProfile /> as ReactNode}
-                            />
-                            <Route
-                                path="*"
-                                element={<Navigate to="/home" replace /> as ReactNode}
-                            />
-                        </Routes>
-                    </BrowserRouter>
-                </ProfileGate>
+                        {/* All other routes are protected by ProfileGate */}
+                        <Route
+                            path="/*"
+                            element={
+                                <ProfileGate>
+                                    <>
+                                        <nav className="navbar">
+                                            <h1 className="logo">Real Deal</h1>
+                                            <div className="nav-right">
+                                                <UserButton
+                                                    userProfileUrl="/profile"
+                                                    userProfileMode="navigation"
+                                                />
+                                                <SignOutButton />
+                                            </div>
+                                        </nav>
+
+                                        <Routes>
+                                            <Route
+                                                index
+                                                element={<Navigate to="/home" replace />}
+                                            />
+                                            <Route
+                                                path="/home"
+                                                element={<Dashboard />}
+                                            />
+                                            <Route
+                                                path="/profile"
+                                                element={<UpdateProfile />}
+                                            />
+                                            <Route
+                                                path="*"
+                                                element={<Navigate to="/home" replace />}
+                                            />
+                                        </Routes>
+                                    </>
+                                </ProfileGate>
+                            }
+                        />
+                    </Routes>
+                </BrowserRouter>
             </SignedIn>
         </div>
     );
 }
 
 export default App;
-

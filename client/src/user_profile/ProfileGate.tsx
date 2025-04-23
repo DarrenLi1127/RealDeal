@@ -1,149 +1,58 @@
-import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { ReactNode, useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import '../styles/Profile.css';
 
-type RegistrationForm = {
-    userId: string;
-    username: string;
-    email: string;
-};
+interface ProfileGateProps {
+    children: ReactNode;
+}
 
-type SubmitResult = { success: boolean; message: string } | null;
-
-type Props = { children: React.ReactNode };
-
-/* -------------------------------------------------------------------------- */
-
-const ProfileGate = ({ children }: Props) => {
+const ProfileGate = ({ children }: ProfileGateProps) => {
     const { user, isLoaded } = useUser();
+    const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+    const [isChecking, setIsChecking] = useState(true);
+    const API_URL = 'http://localhost:8080';
 
-    const [formData, setFormData] = useState<RegistrationForm>({
-        userId: '',
-        username: '',
-        email: ''
-    });
-
-    const [checkingUser, setCheckingUser] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitResult, setSubmitResult] = useState<SubmitResult>(null);
-
-    /* ---------- 1) verify user in DB ---------- */
     useEffect(() => {
-        const verifyUser = async () => {
+        const checkUserRegistration = async () => {
             if (!isLoaded || !user) return;
 
-            setCheckingUser(true);
+            setIsChecking(true);
             try {
-                const resp = await fetch(
-                    `http://localhost:8080/api/users/exists/${user.id}`
-                );
-                const exists = (await resp.json()) as boolean;
+                // Check if the user exists in your backend
+                const response = await fetch(`${API_URL}/api/users/exists/${user.id}`);
 
-                if (exists) {
-                    setShowForm(false); // user already registered
+                if (response.ok) {
+                    const exists = await response.json();
+                    setIsRegistered(exists);
                 } else {
-                    setShowForm(true);  // new user → show form
-                    setFormData({
-                        userId: user.id,
-                        username: '',
-                        email: user.primaryEmailAddress?.emailAddress ?? ''
-                    });
+                    // Handle error, assume not registered
+                    console.error('Error checking user registration:', response.statusText);
+                    setIsRegistered(false);
                 }
-            } catch (err) {
-                console.error('Error checking user:', err);
-                setShowForm(true); // fallback: let them register
+            } catch (error) {
+                console.error('Error checking user registration:', error);
+                setIsRegistered(false);
             } finally {
-                setCheckingUser(false);
+                setIsChecking(false);
             }
         };
 
-        verifyUser();
+        checkUserRegistration();
     }, [isLoaded, user]);
 
-    /* ---------- 2) registration submit ---------- */
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        try {
-            const resp = await fetch('http://localhost:8080/api/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            if (!resp.ok) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const err = await resp.json();
-                throw new Error(
-                    (err as { message?: string }).message ?? 'Registration failed'
-                );
-            }
-
-            setSubmitResult({
-                success: true,
-                message: 'Registration successful! Welcome to Real Deal.'
-            });
-            setShowForm(false);
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : 'Registration failed';
-            setSubmitResult({ success: false, message });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    /* ---------- 3) render ---------- */
-    if (checkingUser || !isLoaded) {
-        return <div className="loading-container">Loading…</div>;
+    // Show loading state while checking
+    if (!isLoaded || isChecking) {
+        return <div className="loading-container">Checking your profile...</div>;
     }
 
-    if (!showForm) {
-        return <>{children}</>;
+    // If user is not registered, redirect to profile creation
+    if (isRegistered === false) {
+        return <Navigate to="/register" replace />;
     }
 
-    return (
-        <div className="profile-container">
-            {submitResult && (
-                <div
-                    className={`result-message ${
-                        submitResult.success ? 'success' : 'error'
-                    }`}
-                >
-                    {submitResult.message}
-                </div>
-            )}
-
-            <h2>Complete Your Profile</h2>
-            <p>Please choose a username to complete your registration.</p>
-
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="username">Username</label>
-                    <input
-                        id="username"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        required
-                        placeholder="Choose a unique username"
-                        disabled={isSubmitting}
-                    />
-                </div>
-
-                <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Registering…' : 'Complete Registration'}
-                </button>
-            </form>
-        </div>
-    );
+    // If user is registered, show the main app content
+    return <>{children}</>;
 };
 
 export default ProfileGate;

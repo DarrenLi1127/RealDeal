@@ -21,15 +21,30 @@ public class UserProfileService {
     return userProfileRepository.existsByUserId(userId);
   }
 
-  public UserProfile registerUser(UserProfile userProfile) {
+  public UserProfile getUserProfile(String userId) {
+    return userProfileRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+  }
 
+  private void validateUsername(String username) {
+    if (username == null || username.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required");
+    }
+
+    if (username.length() < 3 || username.length() > 20) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Username must be between 3-20 characters"
+      );
+    }
+  }
+
+  public UserProfile registerUser(UserProfile userProfile) {
     if(userProfile.getUserId() == null || userProfile.getUserId().isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User ID is required");
     }
 
-    if(userProfile.getUsername() == null || userProfile.getUsername().isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required");
-    }
+    validateUsername(userProfile.getUsername());
 
     if(userProfile.getEmail() == null || userProfile.getEmail().isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -49,4 +64,20 @@ public class UserProfileService {
     return userProfileRepository.save(userProfile);
   }
 
+  public UserProfile updateUsername(String userId, UserProfile updatedProfile) {
+    UserProfile existingProfile = userProfileRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+    if(updatedProfile.getUsername() != null && !updatedProfile.getUsername().isEmpty()
+        && !updatedProfile.getUsername().equals(existingProfile.getUsername())) {
+      // Validate the new username
+      validateUsername(updatedProfile.getUsername());
+
+      if(userProfileRepository.existsByUsername(updatedProfile.getUsername())) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
+      }
+      existingProfile.setUsername(updatedProfile.getUsername());
+    }
+    return userProfileRepository.save(existingProfile);
+  }
 }

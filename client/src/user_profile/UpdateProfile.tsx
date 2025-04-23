@@ -1,108 +1,137 @@
-// client/src/user_profile/UpdateProfile.tsx
 import { useUser } from '@clerk/clerk-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/UpdateProfile.css';
 
 interface ProfileForm {
     username: string;
-    avatarFile: File | null;
-    avatarPreview: string | null;
 }
+
+const API = 'http://localhost:8080';
 
 const UpdateProfile = () => {
     const { user, isLoaded } = useUser();
-    const [form, setForm] = useState<ProfileForm>({
-        username: '',
-        avatarFile: null,
-        avatarPreview: null
-    });
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
 
-    /* preload current values ------------------------------------------------ */
+    const [form, setForm] = useState<ProfileForm>({ username: '' });
+    const [loading, setLoading]   = useState(true);
+    const [saving, setSaving]     = useState(false);
+    const [saved, setSaved]       = useState(false);
+    const [error, setError]       = useState<string | null>(null);
+    const [greeting, setGreeting] = useState('');
+
+    /* ------------------------------------------------------------------ */
+    /* 1. Load user data                                                  */
+    /* ------------------------------------------------------------------ */
     useEffect(() => {
-        if (isLoaded && user) {
-            setForm(prev => ({
-                ...prev,
-                username: user.username || '',
-                avatarPreview: user.imageUrl || null
-            }));
-        }
+        const loadUserData = async () => {
+            if (!isLoaded || !user) return;
+
+            setLoading(true);
+            try {
+                const resp = await fetch(`${API}/api/users/${user.id}`);
+                if (resp.ok) {
+                    const data = await resp.json() as { username: string };
+                    setForm({ username: data.username });
+                    setGreeting(`Hi ${data.username}!`);
+                } else if (resp.status === 404) {
+                    // Not in DB yet → fall back to Clerk
+                    setForm({ username: user.username || '' });
+                    setGreeting(`Hi ${user.username || 'there'}!`);
+                } else {
+                    throw new Error('Failed to load profile');
+                }
+            } catch (err) {
+                console.error('Error loading user data', err);
+                setForm({ username: user?.username || '' });
+                setGreeting(`Hi ${user?.username || 'there'}!`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUserData();
     }, [isLoaded, user]);
 
-    /* handlers -------------------------------------------------------------- */
+    /* ------------------------------------------------------------------ */
+    /* 2. Handlers                                                        */
+    /* ------------------------------------------------------------------ */
     const handleText = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm(prev => ({ ...prev, username: e.target.value }));
-    };
-
-    const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setForm(prev => ({
-            ...prev,
-            avatarFile: file,
-            avatarPreview: URL.createObjectURL(file)
-        }));
+        setForm({ username: e.target.value });
+        setError(null);
     };
 
     const save = async () => {
+        if (!user?.id) {
+            setError('User not authenticated');
+            return;
+        }
+        const { username } = form;
+        if (!username.trim()) {
+            setError('Username cannot be empty');
+            return;
+        }
+        if (username.length < 3 || username.length > 20) {
+            setError('Username must be between 3-20 characters');
+            return;
+        }
+
         setSaving(true);
+        setError(null);
 
-        /* ---------- TODO: wire up real calls ---------- */
-        // await user?.update({ username: form.username });
-        // if (form.avatarFile) await user?.setProfileImage({ file: form.avatarFile });
+        try {
+            const resp = await fetch(
+                `${API}/api/users/${user.id}/username`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                }
+            );
 
-        await new Promise(r => setTimeout(r, 600)); // mock latency
-        /* --------------------------------------------- */
+            if (!resp.ok) {
+                const maybeJson = await resp.text();
+                const { message } = JSON.parse(maybeJson || '{}');
+                throw new Error(message || 'Failed to update profile');
+            }
 
-        setSaved(true);
-        setSaving(false);
-        setTimeout(() => setSaved(false), 2500);
+            setGreeting(`Hi ${username}!`);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2500);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to save changes');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    /* UI -------------------------------------------------------------------- */
-    if (!isLoaded) return <p>Loading profile...</p>;
+    /* ------------------------------------------------------------------ */
+    /* 3. UI                                                              */
+    /* ------------------------------------------------------------------ */
+    if (!isLoaded || loading) return <p>Loading profile…</p>;
 
     return (
         <main className="profile-edit">
-            <h2>Edit Profile</h2>
+            <h2>{greeting}</h2>
+            <p>Update your profile information below:</p>
 
-            <div className="avatar-picker">
-                <img
-                    src={
-                        form.avatarPreview ||
-                        'https://placehold.co/96x96?text=Avatar' /* fallback */
-                    }
-                    alt="avatar preview"
-                    className="avatar-preview"
-                />
-                <label className="avatar-button">
-                    Change photo
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImage}
-                        disabled={saving}
-                        hidden
-                    />
-                </label>
-            </div>
+            {error && <div className="error-message">{error}</div>}
 
             <label className="field">
                 Username
                 <input
-                    name="username"
                     value={form.username}
                     onChange={handleText}
                     disabled={saving}
                     required
                 />
+                <small className="field-hint">
+                    Username must be between 3-20 characters
+                </small>
             </label>
 
             <button onClick={save} disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
             </button>
+
             {saved && <span className="saved-msg">Saved!</span>}
         </main>
     );

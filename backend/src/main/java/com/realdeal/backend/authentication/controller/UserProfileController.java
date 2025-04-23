@@ -24,6 +24,12 @@ public class UserProfileController {
     return new ResponseEntity<>(exists, HttpStatus.OK);
   }
 
+  @GetMapping("/{userId}")
+  public ResponseEntity<UserProfile> getUserProfile(@PathVariable String userId) {
+    UserProfile userProfile = userProfileService.getUserProfile(userId);
+    return new ResponseEntity<>(userProfile, HttpStatus.OK);
+  }
+
   @PostMapping("/register")
   public ResponseEntity<UserProfile> registerUser(@RequestBody UserProfile userProfile) {
     try {
@@ -33,5 +39,14 @@ public class UserProfileController {
       System.err.println("Error during user registration: " + e.getMessage());
       throw e;
     }
+  }
+
+  @PatchMapping("/{userId}/username")
+  public ResponseEntity<UserProfile> updateUserName(
+      @PathVariable String userId,
+      @RequestBody UserProfile userProfile) {
+
+    UserProfile updatedUser = userProfileService.updateUsername(userId, userProfile);
+    return new ResponseEntity<>(updatedUser, HttpStatus.OK);
   }
 }
