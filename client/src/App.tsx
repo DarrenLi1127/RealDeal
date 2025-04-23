@@ -27,14 +27,13 @@ function App() {
             {/* -------- Authenticated users -------- */}
             <SignedIn>
                 <BrowserRouter>
-                    {/* Registration route doesn't use ProfileGate */}
                     <Routes>
                         <Route
                             path="/register"
                             element={<Profile />}
                         />
 
-                        {/* All other routes are protected by ProfileGate */}
+                        {/* All other routes are ProfileGate */}
                         <Route
                             path="/*"
                             element={

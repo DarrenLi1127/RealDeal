@@ -18,9 +18,6 @@ const UpdateProfile = () => {
     const [error, setError]       = useState<string | null>(null);
     const [greeting, setGreeting] = useState('');
 
-    /* ------------------------------------------------------------------ */
-    /* 1. Load user data                                                  */
-    /* ------------------------------------------------------------------ */
     useEffect(() => {
         const loadUserData = async () => {
             if (!isLoaded || !user) return;
@@ -51,9 +48,6 @@ const UpdateProfile = () => {
         loadUserData();
     }, [isLoaded, user]);
 
-    /* ------------------------------------------------------------------ */
-    /* 2. Handlers                                                        */
-    /* ------------------------------------------------------------------ */
     const handleText = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ username: e.target.value });
         setError(null);
@@ -103,9 +97,7 @@ const UpdateProfile = () => {
         }
     };
 
-    /* ------------------------------------------------------------------ */
-    /* 3. UI                                                              */
-    /* ------------------------------------------------------------------ */
+
     if (!isLoaded || loading) return <p>Loading profile…</p>;
 
     return (

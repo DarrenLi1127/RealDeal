@@ -1,6 +1,7 @@
 import '../styles/Profile.css';
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileFormData {
     userId: string;
@@ -10,6 +11,8 @@ interface ProfileFormData {
 
 const Profile = () => {
     const { user, isLoaded } = useUser();
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState<ProfileFormData>({
         userId: '',
         username: '',
@@ -26,17 +29,17 @@ const Profile = () => {
             if (isLoaded && user) {
                 setIsCheckingUser(true);
                 try {
-                    // Check if user already exists
                     const response = await fetch(`http://localhost:8080/api/users/exists/${user.id}`);
                     const exists = await response.json();
 
                     if (exists) {
-                        // User already registered, no need to show form
+                        // User already registered, redirect to home page
                         setShowForm(false);
                         setSubmitResult({
                             success: true,
                             message: 'Welcome back to Real Deal!'
                         });
+                        setTimeout(() => navigate('/home'), 1500);
                     } else {
                         // New user, show registration form
                         setShowForm(true);
@@ -62,7 +65,7 @@ const Profile = () => {
         };
 
         checkUserExists();
-    }, [isLoaded, user]);
+    }, [isLoaded, user, navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -96,6 +99,9 @@ const Profile = () => {
                     message: 'Registration successful! Welcome to Real Deal.'
                 });
                 setShowForm(false); // Hide form after successful registration
+
+                // Add redirect to home page after successful registration
+                setTimeout(() => navigate('/home'), 1500);
             } else {
                 const errorData = await response.json();
                 console.error('Registration failed:', errorData);
