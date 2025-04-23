@@ -1,5 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/UpdateProfile.css';
 
 interface ProfileForm {
@@ -12,10 +13,10 @@ const UpdateProfile = () => {
     const { user, isLoaded } = useUser();
 
     const [form, setForm] = useState<ProfileForm>({ username: '' });
-    const [loading, setLoading]   = useState(true);
-    const [saving, setSaving]     = useState(false);
-    const [saved, setSaved]       = useState(false);
-    const [error, setError]       = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [greeting, setGreeting] = useState('');
 
     useEffect(() => {
@@ -97,12 +98,17 @@ const UpdateProfile = () => {
         }
     };
 
-
     if (!isLoaded || loading) return <p>Loading profile…</p>;
 
     return (
         <main className="profile-edit">
-            <h2>{greeting}</h2>
+            <div className="profile-header">
+                <h2>{greeting}</h2>
+                <Link to="/home" className="back-button">
+                    <span>←</span> Back to Home
+                </Link>
+            </div>
+
             <p>Update your profile information below:</p>
 
             {error && <div className="error-message">{error}</div>}
@@ -120,11 +126,17 @@ const UpdateProfile = () => {
                 </small>
             </label>
 
-            <button onClick={save} disabled={saving}>
-                {saving ? 'Saving…' : 'Save changes'}
-            </button>
+            <div className="button-container">
+                <button
+                    onClick={save}
+                    disabled={saving}
+                    className="save-button"
+                >
+                    {saving ? 'Saving…' : 'Save changes'}
+                </button>
 
-            {saved && <span className="saved-msg">Saved!</span>}
+                {saved && <span className="saved-msg">Saved!</span>}
+            </div>
         </main>
     );
 };
