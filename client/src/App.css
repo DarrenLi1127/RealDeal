@@ -110,6 +110,25 @@ p {
   gap: 1rem;
 }
 
+.create-post-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--clr-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background var(--transition);
+}
+
+.create-post-btn:hover {
+  background: var(--clr-primary-hover);
+}
+
 /* ---------- Global Sign‑Out Button ---------- */
 .global-signout {
   position: fixed;
@@ -140,4 +159,5 @@ p {
     width: 100%;
   }
 }
+
 

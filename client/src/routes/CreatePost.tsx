@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '../styles/CreatePost.css';
 
 const API_BASE = 'http://localhost:8080';
@@ -20,7 +20,6 @@ export default function CreatePost() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------- helpers ---------- */
   const pickImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';                     // allows re-selecting same file later
@@ -41,8 +40,8 @@ export default function CreatePost() {
 
   /* cleanup */
   useEffect(
-    () => () => images.forEach(p => URL.revokeObjectURL(p.src)),
-    [images]
+      () => () => images.forEach(p => URL.revokeObjectURL(p.src)),
+      [images]
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,70 +79,72 @@ export default function CreatePost() {
     }
   };
 
-  /* ---------- render ---------- */
   return (
-    <main className="post-form">
-      <h2>Create a new post</h2>
+      <main className="post-form">
+        <div className="post-form-header">
+          <h2>Create a new post</h2>
+          <Link to="/home" className="cancel-btn">Cancel</Link>
+        </div>
 
-      {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error-msg">{error}</div>}
 
-      <form className="post-form-inner" onSubmit={handleSubmit}>
-        <label className="field">
-          Title
-          <input
-            type="text"
-            maxLength={120}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            disabled={submitting}
-            required
-          />
-        </label>
+        <form className="post-form-inner" onSubmit={handleSubmit}>
+          <label className="field">
+            Title
+            <input
+                type="text"
+                maxLength={120}
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                disabled={submitting}
+                required
+            />
+          </label>
 
-        <label className="field">
-          Content
-          <textarea
-            rows={6}
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            disabled={submitting}
-            required
-          />
-        </label>
+          <label className="field">
+            Content
+            <textarea
+                rows={6}
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                disabled={submitting}
+                required
+            />
+          </label>
 
-        <label className="field">
-          Images
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={pickImages}
-            disabled={submitting}
-          />
-          <small>Select up to 10 images. First one is the cover.</small>
-        </label>
+          <label className="field">
+            Images
+            <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={pickImages}
+                disabled={submitting}
+            />
+            <small>Select up to 10 images. First one is the cover.</small>
+          </label>
 
-        {images.length > 0 && (
-          <ul className="preview-list">
-            {images.map((p, idx) => (
-              <li key={idx} className="preview-item">
-                <img src={p.src} alt={`preview ${idx + 1}`} />
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  aria-label="Remove image"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+          {images.length > 0 && (
+              <ul className="preview-list">
+                {images.map((p, idx) => (
+                    <li key={idx} className="preview-item">
+                      <img src={p.src} alt={`preview ${idx + 1}`} />
+                      <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          aria-label="Remove image"
+                      >
+                        ×
+                      </button>
+                    </li>
+                ))}
+              </ul>
+          )}
 
-        <button type="submit" disabled={submitting} className="submit-btn">
-          {submitting ? 'Posting…' : 'Post'}
-        </button>
-      </form>
-    </main>
+          <button type="submit" disabled={submitting} className="submit-btn">
+            {submitting ? 'Posting…' : 'Post'}
+          </button>
+        </form>
+      </main>
   );
 }

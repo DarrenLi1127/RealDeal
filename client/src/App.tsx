@@ -3,10 +3,9 @@ import {
     SignedIn,
     SignedOut,
     SignInButton,
-    SignOutButton,
     UserButton
 } from '@clerk/clerk-react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import ProfileGate from './user_profile/ProfileGate';
 import Dashboard from './routes/Dashboard';
 import UpdateProfile from './user_profile/UpdateProfile';
@@ -43,11 +42,11 @@ function App() {
                                         <nav className="navbar">
                                             <h1 className="logo">Real Deal</h1>
                                             <div className="nav-right">
+                                                <Link to="/new" className="create-post-btn" aria-label="Create new post">+</Link>
                                                 <UserButton
                                                     userProfileUrl="/profile"
                                                     userProfileMode="navigation"
                                                 />
-                                                <SignOutButton />
                                             </div>
                                         </nav>
 
@@ -61,8 +60,8 @@ function App() {
                                                 element={<Dashboard />}
                                             />
 
-                                            <Route 
-                                                path="/new" 
+                                            <Route
+                                                path="/new"
                                                 element={<CreatePost />} />
 
                                             <Route
