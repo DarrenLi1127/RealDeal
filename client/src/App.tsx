@@ -11,6 +11,7 @@ import ProfileGate from './user_profile/ProfileGate';
 import Dashboard from './routes/Dashboard';
 import UpdateProfile from './user_profile/UpdateProfile';
 import Profile from './user_profile/Profile';
+import CreatePost from './routes/CreatePost';
 
 function App() {
     return (
@@ -59,6 +60,11 @@ function App() {
                                                 path="/home"
                                                 element={<Dashboard />}
                                             />
+
+                                            <Route 
+                                                path="/new" 
+                                                element={<CreatePost />} />
+
                                             <Route
                                                 path="/profile"
                                                 element={<UpdateProfile />}
