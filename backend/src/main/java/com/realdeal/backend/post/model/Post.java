@@ -1,8 +1,8 @@
-/* Post.java */
 package com.realdeal.backend.post.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,9 @@ public class Post {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @JsonManagedReference
+    //Marks the parent side of the relationship.
+    //The field with this annotation will be serialized normally.
     @OneToMany(mappedBy = "post",
         cascade = CascadeType.ALL,
         orphanRemoval = true)

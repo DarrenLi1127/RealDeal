@@ -2,6 +2,7 @@ package com.realdeal.backend.post.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.util.UUID;
 
 @Data
@@ -11,10 +12,12 @@ public class PostImage {
     @Id @GeneratedValue
     private UUID id;
 
+    @JsonBackReference
+    //Marks the child side of the relationship.
+    //The field with this annotation will be omitted from serialization.
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
 
-    /** order of the image in the carousel */
     private int position;
 
     @Column(nullable = false, length = 2048)

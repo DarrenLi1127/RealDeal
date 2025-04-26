@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserProfileService {
@@ -24,6 +27,23 @@ public class UserProfileService {
   public UserProfile getUserProfile(String userId) {
     return userProfileRepository.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+  }
+
+  public String getUsernameByUserId(String userId) {
+    UserProfile userProfile = userProfileRepository.findById(userId)
+        .orElse(null);
+    return userProfile != null ? userProfile.getUsername() : "Unknown User";
+  }
+
+  public Map<String, String> getUsernamesByUserIds(List<String> userIds) {
+    List<UserProfile> profiles = userProfileRepository.findAllById(userIds);
+
+    return profiles.stream()
+        .collect(Collectors.toMap(
+            UserProfile::getUserId,
+            UserProfile::getUsername,
+            (existing, replacement) -> existing
+        ));
   }
 
   private void validateUsername(String username) {
@@ -80,4 +100,5 @@ public class UserProfileService {
     }
     return userProfileRepository.save(existingProfile);
   }
+
 }

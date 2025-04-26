@@ -63,7 +63,7 @@ export default function CreatePost() {
       form.append('content', content.trim());
       images.forEach(p => form.append('images', p.file));
 
-      const resp = await fetch(`${API_BASE}/api/posts`, {
+      const resp = await fetch(`${API_BASE}/api/posts/create`, {
         method: 'POST',
         body: form,
       });

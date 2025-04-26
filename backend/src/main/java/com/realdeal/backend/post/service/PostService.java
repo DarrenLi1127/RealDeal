@@ -5,6 +5,8 @@ import com.realdeal.backend.post.model.PostImage;
 import com.realdeal.backend.post.repository.PostRepository;
 import com.realdeal.backend.storage.service.UploadService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,6 @@ public class PostService {
 
     private final PostRepository postRepo;
     private final UploadService  uploadService;
-
-    /* ---------- public API ---------- */
 
     public Post createPost(String userId,
         String title,
@@ -52,7 +52,10 @@ public class PostService {
         return postRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
-    /* ---------- helpers ---------- */
+    public Page<Post> getPaginatedPosts(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findAll(pageRequest);
+    }
 
     private void validate(String userId,
         String title,
