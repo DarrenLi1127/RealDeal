@@ -12,7 +12,6 @@ import java.util.UUID;
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-    /* -------- counter helpers -------- */
     @Modifying
     @Query("UPDATE Post p SET p.likesCount = p.likesCount + 1 WHERE p.id = :id")
     void incrementLikes(@Param("id") UUID id);

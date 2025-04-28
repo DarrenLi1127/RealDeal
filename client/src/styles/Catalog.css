@@ -334,34 +334,67 @@
     }
 }
 
+/* Updated reaction styles */
 .like-btn,
 .star-btn {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  margin-right: .75rem;
-  transition: transform .1s;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    margin-right: .75rem;
+    transition: all .2s;
+    padding: 8px 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    font-weight: bold;
 }
 
-.like-btn.active,
+.like-btn.active {
+    background-color: #ffecec;
+    color: #e63946;
+    border-color: #e63946;
+}
+
 .star-btn.active {
-  color: #e63946;          /* choose any accent */
+    background-color: #fff8e0;
+    color: #ffc107;
+    border-color: #ffc107;
 }
 
 .like-btn:hover,
 .star-btn:hover {
-  transform: scale(1.15);
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .modal-reactions {
-  margin-top: .75rem;
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 10px;
 }
 
 .card-reactions {
-  font-size: .75rem;
-  color: #777;
-  display: flex;
-  gap: .75rem;
-  margin-top: .25rem;
+    font-size: .9rem;
+    display: flex;
+    gap: 1rem;
+    margin-top: .5rem;
+}
+
+.card-reactions span {
+    display: inline-flex;
+    align-items: center;
+    color: #666;
+}
+
+.card-reactions span.liked {
+    color: #e63946;
+    font-weight: 500;
+}
+
+.card-reactions span.starred {
+    color: #ffc107;
+    font-weight: 500;
 }

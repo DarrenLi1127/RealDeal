@@ -52,7 +52,8 @@ public class PostController {
     @GetMapping("/all")
     public ResponseEntity<Page<PostWithUserDTO>> getPosts(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "9") int size) {
+        @RequestParam(defaultValue = "9") int size,
+        @RequestParam(required = false) String userId) {  // Add userId parameter
 
         Page<Post> posts = postService.getPaginatedPosts(page, size);
 
@@ -65,11 +66,20 @@ public class PostController {
         // Fetch all usernames in one batch
         Map<String, String> usernameMap = userProfileService.getUsernamesByUserIds(userIds);
 
-        // Map posts to DTOs with usernames
+        // Map posts to DTOs with usernames and reaction status
         List<PostWithUserDTO> postDTOs = posts.getContent().stream()
             .map(post -> {
                 String username = usernameMap.getOrDefault(post.getUserId(), "Unknown User");
-                return PostWithUserDTO.fromPost(post, username);
+                boolean liked = false;
+                boolean starred = false;
+
+                // Check if the current user has liked or starred this post
+                if (userId != null) {
+                    liked = reactionService.hasLiked(post.getId(), userId);
+                    starred = reactionService.hasStarred(post.getId(), userId);
+                }
+
+                return PostWithUserDTO.fromPost(post, username, liked, starred);
             })
             .collect(Collectors.toList());
 

@@ -58,11 +58,12 @@ public class ReactionService {
         }
     }
 
-    /* helpers for feed DTOs */
-    public boolean likedByUser(UUID postId, String userId) {
+
+    public boolean hasLiked(UUID postId, String userId) {
         return likeRepo.existsByPostIdAndUserId(postId, userId);
     }
-    public boolean starredByUser(UUID postId, String userId) {
+
+    public boolean hasStarred(UUID postId, String userId) {
         return starRepo.existsByPostIdAndUserId(postId, userId);
     }
 }
