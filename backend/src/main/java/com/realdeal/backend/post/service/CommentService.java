@@ -36,11 +36,9 @@ public class CommentService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "content required");
     }
 
-    // Find the post
     Post post = postRepository.findById(postId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-    // Create new comment
     Comment comment = new Comment();
     comment.setPost(post);
     comment.setUserId(userId);
