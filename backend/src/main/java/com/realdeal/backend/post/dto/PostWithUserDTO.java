@@ -18,7 +18,13 @@ public class PostWithUserDTO {
   private List<PostImageDTO> images;
   private LocalDateTime createdAt;
 
-  public static PostWithUserDTO fromPost(Post post, String username) {
+  private int  likesCount;
+  private int  starsCount;
+  private boolean liked;
+  private boolean starred;
+
+
+  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred) {
     PostWithUserDTO dto = new PostWithUserDTO();
     dto.setId(post.getId());
     dto.setUserId(post.getUserId());
@@ -29,7 +35,18 @@ public class PostWithUserDTO {
         .map(PostImageDTO::fromPostImage)
         .collect(Collectors.toList()));
     dto.setCreatedAt(post.getCreatedAt());
+
+    dto.setLikesCount(post.getLikesCount());
+    dto.setStarsCount(post.getStarsCount());
+    dto.setLiked(liked);
+    dto.setStarred(starred);
+
+
     return dto;
+  }
+
+  public static PostWithUserDTO fromPost(Post post, String username) {
+    return fromPost(post, username, false, false);
   }
 
   @Data

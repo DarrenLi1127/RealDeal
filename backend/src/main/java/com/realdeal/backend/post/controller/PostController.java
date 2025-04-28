@@ -4,6 +4,9 @@ import com.realdeal.backend.authentication.service.UserProfileService;
 import com.realdeal.backend.post.dto.PostWithUserDTO;
 import com.realdeal.backend.post.model.Post;
 import com.realdeal.backend.post.service.PostService;
+import com.realdeal.backend.post.service.ReactionService;
+import com.realdeal.backend.post.repository.PostRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -12,10 +15,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+
+
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.UUID;
+
+
 
 @RestController
 @RequestMapping("/api/posts")
@@ -24,6 +33,9 @@ public class PostController {
 
     private final PostService postService;
     private final UserProfileService userProfileService;
+
+    private final ReactionService reactionService;
+    private final PostRepository  postRepo;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostWithUserDTO> createPost(@RequestParam String userId,
@@ -69,4 +81,25 @@ public class PostController {
 
         return ResponseEntity.ok(postDTOPage);
     }
+
+    @PostMapping("/{postId}/like")
+    @Transactional
+    public ResponseEntity<?> like(@PathVariable UUID postId,
+        @RequestParam String userId) {
+
+        boolean liked = reactionService.toggleLike(postId, userId);
+        int     count = postRepo.findById(postId).orElseThrow().getLikesCount();
+        return ResponseEntity.ok(Map.of("liked", liked, "likes", count));
+    }
+
+    @PostMapping("/{postId}/star")
+    @Transactional
+    public ResponseEntity<?> star(@PathVariable UUID postId,
+        @RequestParam String userId) {
+
+        boolean starred = reactionService.toggleStar(postId, userId);
+        int     count   = postRepo.findById(postId).orElseThrow().getStarsCount();
+        return ResponseEntity.ok(Map.of("starred", starred, "stars", count));
+    }
+
 }
