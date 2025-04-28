@@ -25,7 +25,7 @@ const Catalog = () => {
     const [selected,    setSelected]    = useState<Post | null>(null);
 
     /* -------------- user ---------------- */
-    const { user } = useUser();  // Add this to use Clerk user
+    const { user } = useUser();
 
     /* -------------- fetch --------------- */
     useEffect(() => {
