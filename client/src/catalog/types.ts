@@ -18,4 +18,17 @@ export interface PostImage {
     liked?: boolean;
     starred?: boolean;
   }
+
+export interface Comment {
+  id: string;
+  postId: string;
+  userId: string;
+  username: string;
+  content: string;
+  parentId?: string;
+  replies: Comment[];
+  likesCount: number;
+  liked: boolean;
+  createdAt: string;
+}
   

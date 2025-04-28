@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Post } from "./types";
+import CommentSection from "./CommentSection";
 import "../styles/Catalog.css";
 
 interface PostModalProps {
@@ -153,6 +154,11 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
                 {starred ? "★" : "☆"}
               </button>
             </div>
+          </div>
+
+          {/* Add the Comment Section here */}
+          <div className="modal-comments-container">
+            <CommentSection postId={post.id} />
           </div>
         </div>
       </div>
