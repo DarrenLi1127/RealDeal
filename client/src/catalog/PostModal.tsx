@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { Post } from "./types";
-import "../styles/Catalog.css";          // ✔ keeps the existing modal styles
+import { toggleLike, toggleStar } from "../utils/api";
+import "../styles/Catalog.css";
 
 interface PostModalProps {
   post: Post;
@@ -8,73 +10,68 @@ interface PostModalProps {
 }
 
 export default function PostModal({ post, onClose }: PostModalProps) {
-  const [index, setIndex] = useState(0);
+  const [idx, setIdx] = useState(0);
 
-  /* ----- prevent background scroll while modal is open ----- */
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = "auto"; };
-  }, []);
+  /* --- reaction state --- */
+  const [liked,   setLiked]   = useState(post.liked ?? false);
+  const [likes,   setLikes]   = useState(post.likesCount ?? 0);
+  const [starred, setStarred] = useState(post.starred ?? false);
 
-  /* ----- helper fns ----- */
-  const next  = () => index < post.images.length - 1 && setIndex(i => i + 1);
-  const prev  = () => index > 0                     && setIndex(i => i - 1);
+  const { user } = useUser();            // Clerk user
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  async function onLike() {
+    if (!user) return;
+    try {
+      const res = await toggleLike(post.id, user.id);
+      setLiked(res.liked);
+      setLikes(res.likes);
+    } catch (err) { console.error(err); }
+  }
 
-  const handleOverlay = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).classList.contains("modal-overlay")) onClose();
-  };
+  async function onStar() {
+    if (!user) return;
+    try {
+      const res = await toggleStar(post.id, user.id);
+      setStarred(res.starred);
+    } catch (err) { console.error(err); }
+  }
 
-  /* ----- render ----- */
+  /* prevent background scroll */
+  useEffect(() => { document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = "auto"; }; }, []);
+
+  const next  = () => idx < post.images.length - 1 && setIdx(i => i + 1);
+  const prev  = () => idx > 0                     && setIdx(i => i - 1);
+
+  const format = (s: string) =>
+    new Date(s).toLocaleString("en-US",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+
+  const clickOverlay = (e: React.MouseEvent) =>
+    (e.target as HTMLElement).classList.contains("modal-overlay") && onClose();
+
   return (
-    <div className="modal-overlay" onClick={handleOverlay}>
+    <div className="modal-overlay" onClick={clickOverlay}>
       <div className="modal-content">
         <button className="modal-close" onClick={onClose}>×</button>
 
-        {/* ----------------- image viewer ----------------- */}
         <div className="modal-image-container">
-          <img
-            className="modal-image"
-            src={post.images[index].url}
-            alt={`${post.title} – image ${index + 1}`}
-          />
+          <img className="modal-image"
+               src={post.images[idx].url}
+               alt={`${post.title} – ${idx+1}`} />
 
           {post.images.length > 1 && (
             <>
-              {/* arrows + counter */}
               <div className="image-navigation">
-                <button onClick={prev} disabled={index === 0} className="image-nav-button">
-                  &laquo;
-                </button>
-                <span className="image-counter">
-                  {index + 1} / {post.images.length}
-                </span>
-                <button
-                  onClick={next}
-                  disabled={index === post.images.length - 1}
-                  className="image-nav-button"
-                >
-                  &raquo;
-                </button>
+                <button onClick={prev} disabled={idx===0}   className="image-nav-button"> &laquo; </button>
+                <span className="image-counter">{idx+1}/{post.images.length}</span>
+                <button onClick={next} disabled={idx===post.images.length-1} className="image-nav-button"> &raquo; </button>
               </div>
-
-              {/* tiny thumbnails */}
               <div className="thumbnail-container">
-                {post.images.map((img, i) => (
-                  <div
-                    key={img.id}
-                    className={`thumbnail ${i === index ? "active" : ""}`}
-                    onClick={() => setIndex(i)}
-                  >
-                    <img src={img.url} alt={`thumb ${i + 1}`} />
+                {post.images.map((img,i)=>(
+                  <div key={img.id}
+                       className={`thumbnail ${i===idx?"active":""}`}
+                       onClick={()=>setIdx(i)} >
+                    <img src={img.url} alt={`thumb ${i+1}`} />
                   </div>
                 ))}
               </div>
@@ -82,12 +79,30 @@ export default function PostModal({ post, onClose }: PostModalProps) {
           )}
         </div>
 
-        {/* ----------------- post meta ----------------- */}
         <div className="modal-post-details">
           <h2 className="modal-title">{post.title}</h2>
           <p className="modal-username">@{post.username}</p>
-          <p className="modal-date">{formatDate(post.createdAt)}</p>
+          <p className="modal-date">{format(post.createdAt)}</p>
           <div className="modal-content-text">{post.content}</div>
+
+          {/* ----- reactions ----- */}
+          <div className="modal-reactions">
+            <button
+              className={`like-btn ${liked ? "active" : ""}`}
+              onClick={onLike}
+              aria-label={liked ? "Unlike" : "Like"}
+            >
+              ♥ {likes}
+            </button>
+
+            <button
+              className={`star-btn ${starred ? "active" : ""}`}
+              onClick={onStar}
+              aria-label={starred ? "Remove star" : "Star"}
+            >
+              ★
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -11,6 +11,11 @@ export interface PostImage {
     title: string;
     content: string;
     images: PostImage[];
-    createdAt: string;         // ISO string from backend
+    createdAt: string;
+    
+    likesCount?: number;
+    starsCount?: number;
+    liked?: boolean;
+    starred?: boolean;
   }
   

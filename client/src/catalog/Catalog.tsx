@@ -95,6 +95,10 @@ const Catalog = () => {
                 {p.content.length > 100 ? p.content.slice(0, 100) + "…" : p.content}
               </p>
               <p className="post-date">{formatDate(p.createdAt)}</p>
+              <div className="card-reactions">
+                <span>♥ {p.likesCount}</span>
+                <span>★ {p.starsCount}</span>
+              </div>
             </div>
           </div>
         ))}

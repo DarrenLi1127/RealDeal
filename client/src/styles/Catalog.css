@@ -333,3 +333,35 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+.like-btn,
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-right: .75rem;
+  transition: transform .1s;
+}
+
+.like-btn.active,
+.star-btn.active {
+  color: #e63946;          /* choose any accent */
+}
+
+.like-btn:hover,
+.star-btn:hover {
+  transform: scale(1.15);
+}
+
+.modal-reactions {
+  margin-top: .75rem;
+}
+
+.card-reactions {
+  font-size: .75rem;
+  color: #777;
+  display: flex;
+  gap: .75rem;
+  margin-top: .25rem;
+}

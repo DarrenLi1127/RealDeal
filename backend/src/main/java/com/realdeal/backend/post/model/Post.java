@@ -33,5 +33,11 @@ public class Post {
     @OrderBy("position ASC")             // maintain upload order
     private List<PostImage> images = new ArrayList<>();
 
+    @Column(nullable = false)
+    private int likesCount = 0;
+
+    @Column(nullable = false)
+    private int starsCount = 0;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }
