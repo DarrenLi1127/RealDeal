@@ -13,9 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,30 +46,56 @@ public class CommentController {
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String userId) {
 
+    // Get top-level comments with pagination
     Page<Comment> comments = commentService.getTopLevelComments(postId, page, size);
 
+    // Collect all comments and replies for like status checking
+    List<Comment> allComments = new ArrayList<>();
+    Map<UUID, Boolean> likeStatusMap = new HashMap<>();
+
+    // Add top-level comments
+    allComments.addAll(comments.getContent());
+
+    // Add all replies (recursive function to get all nested replies)
+    for (Comment comment : comments.getContent()) {
+      collectAllReplies(comment, allComments);
+    }
+
+    // Check like status for all comments if user is provided
+    if (userId != null) {
+      for (Comment comment : allComments) {
+        boolean liked = commentService.hasLikedComment(comment.getId(), userId);
+        likeStatusMap.put(comment.getId(), liked);
+      }
+    }
+
     // Collect all user IDs from comments and their replies
-    List<String> userIds = comments.getContent().stream()
+    List<String> userIds = allComments.stream()
         .map(Comment::getUserId)
         .distinct()
         .collect(Collectors.toList());
 
-    // Add user IDs from replies
-    comments.getContent().forEach(comment -> {
-      comment.getReplies().forEach(reply -> {
-        userIds.add(reply.getUserId());
-      });
-    });
-
     // Fetch usernames in batch
     Map<String, String> usernameMap = userProfileService.getUsernamesByUserIds(userIds);
 
-    // Convert to DTOs with usernames
+    // Create a map of comment IDs to usernames for all comments
+    Map<UUID, String> commentUsernames = new HashMap<>();
+    for (Comment comment : allComments) {
+      String username = usernameMap.getOrDefault(comment.getUserId(), "Unknown User");
+      commentUsernames.put(comment.getId(), username);
+    }
+
+    // Convert to DTOs with usernames and like status
     List<CommentDTO> commentDTOs = comments.getContent().stream()
         .map(comment -> {
           String username = usernameMap.getOrDefault(comment.getUserId(), "Unknown User");
-          boolean liked = userId != null && commentService.hasLikedComment(comment.getId(), userId);
-          return CommentDTO.fromComment(comment, username, liked);
+          boolean liked = likeStatusMap.getOrDefault(comment.getId(), false);
+
+          CommentDTO dto = CommentDTO.fromComment(comment, username, liked, likeStatusMap);
+
+          updateReplyUsernames(dto.getReplies(), usernameMap);
+
+          return dto;
         })
         .collect(Collectors.toList());
 
@@ -82,6 +106,24 @@ public class CommentController {
     );
 
     return ResponseEntity.ok(dtoPage);
+  }
+
+  private void updateReplyUsernames(List<CommentDTO> replies, Map<String, String> usernameMap) {
+    for (CommentDTO reply : replies) {
+      // Update the username of this reply
+      reply.setUsername(usernameMap.getOrDefault(reply.getUserId(), "Unknown User"));
+
+      if (!reply.getReplies().isEmpty()) {
+        updateReplyUsernames(reply.getReplies(), usernameMap);
+      }
+    }
+  }
+
+  private void collectAllReplies(Comment comment, List<Comment> allComments) {
+    for (Comment reply : comment.getReplies()) {
+      allComments.add(reply);
+      collectAllReplies(reply, allComments);
+    }
   }
 
   @PostMapping("/{commentId}/like")
