@@ -1,5 +1,6 @@
 package com.realdeal.backend.post.service;
 
+import com.realdeal.backend.exp.service.ExperienceService;
 import com.realdeal.backend.post.model.Post;
 import com.realdeal.backend.post.model.PostImage;
 import com.realdeal.backend.post.repository.PostRepository;
@@ -22,6 +23,7 @@ public class PostService {
 
     private final PostRepository postRepo;
     private final UploadService  uploadService;
+    private final ExperienceService experienceService;
 
     public Post createPost(String userId,
         String title,
@@ -44,6 +46,8 @@ public class PostService {
             pi.setUrl(url);
             post.getImages().add(pi);
         });
+
+        experienceService.addExp(userId, 15);
 
         return postRepo.save(post);
     }

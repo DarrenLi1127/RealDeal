@@ -2,12 +2,20 @@ import { useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/UpdateProfile.css";
+import ExpBar from "../catalog/ExpBar";
+
 
 interface ProfileForm {
   username: string;
   avatarFile: File | null;
   avatarPreview: string | null;
 }
+
+interface UserStats {
+  experience: number;
+  level: number;
+}
+
 
 const API = "http://localhost:8080";
 
@@ -19,6 +27,9 @@ const UpdateProfile = () => {
     avatarFile: null,
     avatarPreview: null,
   });
+
+  const [stats, setStats] = useState<UserStats | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -33,7 +44,16 @@ const UpdateProfile = () => {
       try {
         const resp = await fetch(`${API}/api/users/${user.id}`);
         if (resp.ok) {
-          const data = (await resp.json()) as { username: string };
+          const data = await resp.json() as {
+            username:    string;
+            experience?: number;
+            level?:      number;
+          };
+          setStats({
+            experience: data.experience ?? 0,
+            level:      data.level      ?? 1,
+          });
+
           setForm({
             username: data.username,
             avatarFile: null,
@@ -47,6 +67,7 @@ const UpdateProfile = () => {
             avatarFile: null,
             avatarPreview: user.imageUrl || null,
           });
+          setStats({ experience: 0, level: 1 });
           setGreeting(`Hi ${user.username || "there"}!`);
         } else {
           throw new Error("Failed to load profile");
@@ -58,6 +79,7 @@ const UpdateProfile = () => {
           avatarFile: null,
           avatarPreview: user?.imageUrl || null,
         });
+        setStats({ experience: 0, level: 1 });
         setGreeting(`Hi ${user?.username || "there"}!`);
       } finally {
         setLoading(false);
@@ -158,6 +180,15 @@ const UpdateProfile = () => {
           <span>←</span> Back to Home
         </Link>
       </div>
+
+      {stats && (
+        <div className="exp-section">
+          <ExpBar exp={stats.experience} level={stats.level} />
+          <p className="exp-numbers">
+            {stats.experience} EXP&nbsp;•&nbsp;Level&nbsp;{stats.level}
+          </p>
+        </div>
+      )}
 
       <p>Update your profile information below:</p>
 

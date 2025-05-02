@@ -1,6 +1,7 @@
 package com.realdeal.backend.authentication.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -29,4 +30,13 @@ public class UserProfile {
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
+
+  @Column(nullable = false)
+  private Integer experience = 0;               // grows forever
+
+  @Column(nullable = false)
+  private Integer level = 1;                    // 1‒30 cap
+
+  @Column(name = "last_daily_exp")
+  private LocalDate lastDailyExp;               // for daily-login bonus
 }

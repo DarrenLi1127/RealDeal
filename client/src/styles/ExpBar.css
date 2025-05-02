@@ -1,0 +1,5 @@
+.exp-bar { display:flex; align-items:center; gap:.5rem; font-size:.9rem; }
+.exp-track { flex:1; height:8px; background:#eee; border-radius:4px; overflow:hidden; }
+.exp-fill  { height:100%; background:#5995ff; }
+.exp-lv { width:50px; font-weight:600; }
+.exp-text { width:80px; text-align:right; }
