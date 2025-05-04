@@ -1,9 +1,11 @@
 package com.realdeal.backend.post.dto;
 
+import com.realdeal.backend.genre.dto.GenreDTO;
 import com.realdeal.backend.post.model.Post;
 import com.realdeal.backend.post.model.PostImage;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -17,14 +19,13 @@ public class PostWithUserDTO {
   private String content;
   private List<PostImageDTO> images;
   private LocalDateTime createdAt;
-
-  private int  likesCount;
-  private int  starsCount;
+  private int likesCount;
+  private int starsCount;
   private boolean liked;
   private boolean starred;
+  private List<GenreDTO> genres;
 
-
-  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred) {
+  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred, List<GenreDTO> genres) {
     PostWithUserDTO dto = new PostWithUserDTO();
     dto.setId(post.getId());
     dto.setUserId(post.getUserId());
@@ -35,18 +36,20 @@ public class PostWithUserDTO {
         .map(PostImageDTO::fromPostImage)
         .collect(Collectors.toList()));
     dto.setCreatedAt(post.getCreatedAt());
-
     dto.setLikesCount(post.getLikesCount());
     dto.setStarsCount(post.getStarsCount());
     dto.setLiked(liked);
     dto.setStarred(starred);
-
-
+    dto.setGenres(genres != null ? genres : new ArrayList<>());
     return dto;
   }
 
+  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred) {
+    return fromPost(post, username, liked, starred, new ArrayList<>());
+  }
+
   public static PostWithUserDTO fromPost(Post post, String username) {
-    return fromPost(post, username, false, false);
+    return fromPost(post, username, false, false, new ArrayList<>());
   }
 
   @Data

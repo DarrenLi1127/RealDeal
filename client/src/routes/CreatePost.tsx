@@ -2,6 +2,7 @@ import { useUser } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/CreatePost.css';
+import { Genre } from '../catalog/types';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -20,9 +21,29 @@ export default function CreatePost() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Genre states
+  const [allGenres, setAllGenres] = useState<Genre[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
+
+  // Load all available genres
+  useEffect(() => {
+    const loadGenres = async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/api/genres`);
+        if (resp.ok) {
+          const data = await resp.json();
+          setAllGenres(data);
+        }
+      } catch (err) {
+        console.error("Error loading genres", err);
+      }
+    };
+    loadGenres();
+  }, []);
+
   const pickImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    e.target.value = '';                     // allows re-selecting same file later
+    e.target.value = '';
     const previews = files.map(file => ({
       file,
       src: URL.createObjectURL(file),
@@ -38,7 +59,26 @@ export default function CreatePost() {
     });
   };
 
-  /* cleanup */
+  const handleGenreToggle = (genre: Genre) => {
+    setSelectedGenres(prev => {
+      const isSelected = prev.some(g => g.id === genre.id);
+      let newGenres: Genre[];
+
+      if (isSelected) {
+        newGenres = prev.filter(g => g.id !== genre.id);
+      } else {
+        if (prev.length >= 3) {
+          setError("You can select up to 3 genres only");
+          return prev;
+        }
+        newGenres = [...prev, genre];
+      }
+
+      setError(null);
+      return newGenres;
+    });
+  };
+
   useEffect(
       () => () => images.forEach(p => URL.revokeObjectURL(p.src)),
       [images]
@@ -53,6 +93,11 @@ export default function CreatePost() {
       return;
     }
 
+    if (selectedGenres.length === 0) {
+      setError('Please select at least one genre');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -63,15 +108,21 @@ export default function CreatePost() {
       form.append('content', content.trim());
       images.forEach(p => form.append('images', p.file));
 
+      // Add genre IDs as parameters
+      selectedGenres.forEach(genre => {
+        form.append('genreIds', genre.id.toString());
+      });
+
       const resp = await fetch(`${API_BASE}/api/posts/create`, {
         method: 'POST',
         body: form,
       });
+
       if (!resp.ok) {
         const t = await resp.text();
         throw new Error(t || 'Failed to create post');
       }
-      navigate('/home');                      // back to feed
+      navigate('/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -140,6 +191,25 @@ export default function CreatePost() {
                 ))}
               </ul>
           )}
+
+          <label className="field">
+            Genres (1-3 required)
+            <div className="genre-tags">
+              {allGenres.map((genre) => (
+                  <button
+                      key={genre.id}
+                      className={`genre-tag ${
+                          selectedGenres.some(g => g.id === genre.id) ? "selected" : ""
+                      }`}
+                      onClick={() => handleGenreToggle(genre)}
+                      disabled={submitting}
+                      type="button"
+                  >
+                    {genre.name}
+                  </button>
+              ))}
+            </div>
+          </label>
 
           <button type="submit" disabled={submitting} className="submit-btn">
             {submitting ? 'Posting…' : 'Post'}

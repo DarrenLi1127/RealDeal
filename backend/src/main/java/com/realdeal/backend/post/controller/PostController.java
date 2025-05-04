@@ -1,6 +1,10 @@
 package com.realdeal.backend.post.controller;
 
 import com.realdeal.backend.authentication.service.UserProfileService;
+import com.realdeal.backend.genre.dto.GenreDTO;
+import com.realdeal.backend.genre.dto.PostGenreAssignRequest;
+import com.realdeal.backend.genre.model.Genre;
+import com.realdeal.backend.genre.service.GenreService;
 import com.realdeal.backend.post.dto.PostWithUserDTO;
 import com.realdeal.backend.post.model.Post;
 import com.realdeal.backend.post.service.PostService;
@@ -17,14 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
-
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.UUID;
-
-
 
 @RestController
 @RequestMapping("/api/posts")
@@ -33,19 +33,32 @@ public class PostController {
 
     private final PostService postService;
     private final UserProfileService userProfileService;
-
     private final ReactionService reactionService;
-    private final PostRepository  postRepo;
+    private final PostRepository postRepo;
+    private final GenreService genreService;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<PostWithUserDTO> createPost(@RequestParam String userId,
+    public ResponseEntity<PostWithUserDTO> createPost(
+        @RequestParam String userId,
         @RequestParam String title,
         @RequestParam String content,
-        @RequestPart("images") List<MultipartFile> images) {
+        @RequestPart("images") List<MultipartFile> images,
+        @RequestParam(required = false) List<Integer> genreIds) {
 
         Post saved = postService.createPost(userId, title, content, images);
+
+        // Assign genres if provided
+        List<GenreDTO> genreDTOs = null;
+        if (genreIds != null && !genreIds.isEmpty()) {
+            genreService.assignGenresToPost(saved.getId(), genreIds);
+            List<Genre> postGenres = genreService.getPostGenres(saved.getId());
+            genreDTOs = postGenres.stream()
+                .map(genre -> new GenreDTO(genre.getId(), genre.getName(), genre.getDescription()))
+                .collect(Collectors.toList());
+        }
+
         String username = userProfileService.getUsernameByUserId(userId);
-        PostWithUserDTO dto = PostWithUserDTO.fromPost(saved, username);
+        PostWithUserDTO dto = PostWithUserDTO.fromPost(saved, username, false, false, genreDTOs);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
@@ -53,7 +66,7 @@ public class PostController {
     public ResponseEntity<Page<PostWithUserDTO>> getPosts(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "9") int size,
-        @RequestParam(required = false) String userId) {  // Add userId parameter
+        @RequestParam(required = false) String userId) {
 
         Page<Post> posts = postService.getPaginatedPosts(page, size);
 
@@ -66,7 +79,7 @@ public class PostController {
         // Fetch all usernames in one batch
         Map<String, String> usernameMap = userProfileService.getUsernamesByUserIds(userIds);
 
-        // Map posts to DTOs with usernames and reaction status
+        // Map posts to DTOs with usernames, reaction status, and genres
         List<PostWithUserDTO> postDTOs = posts.getContent().stream()
             .map(post -> {
                 String username = usernameMap.getOrDefault(post.getUserId(), "Unknown User");
@@ -79,7 +92,13 @@ public class PostController {
                     starred = reactionService.hasStarred(post.getId(), userId);
                 }
 
-                return PostWithUserDTO.fromPost(post, username, liked, starred);
+                // Get genres for this post
+                List<Genre> postGenres = genreService.getPostGenres(post.getId());
+                List<GenreDTO> genreDTOs = postGenres.stream()
+                    .map(genre -> new GenreDTO(genre.getId(), genre.getName(), genre.getDescription()))
+                    .collect(Collectors.toList());
+
+                return PostWithUserDTO.fromPost(post, username, liked, starred, genreDTOs);
             })
             .collect(Collectors.toList());
 
@@ -92,13 +111,28 @@ public class PostController {
         return ResponseEntity.ok(postDTOPage);
     }
 
+    @PutMapping("/{postId}/genres")
+    public ResponseEntity<List<GenreDTO>> updatePostGenres(
+        @PathVariable UUID postId,
+        @RequestBody PostGenreAssignRequest request) {
+
+        genreService.assignGenresToPost(postId, request.getGenreIds());
+        List<Genre> postGenres = genreService.getPostGenres(postId);
+
+        List<GenreDTO> genreDTOs = postGenres.stream()
+            .map(genre -> new GenreDTO(genre.getId(), genre.getName(), genre.getDescription()))
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(genreDTOs);
+    }
+
     @PostMapping("/{postId}/like")
     @Transactional
     public ResponseEntity<?> like(@PathVariable UUID postId,
         @RequestParam String userId) {
 
         boolean liked = reactionService.toggleLike(postId, userId);
-        int     count = postRepo.findById(postId).orElseThrow().getLikesCount();
+        int count = postRepo.findById(postId).orElseThrow().getLikesCount();
         return ResponseEntity.ok(Map.of("liked", liked, "likes", count));
     }
 
@@ -108,8 +142,7 @@ public class PostController {
         @RequestParam String userId) {
 
         boolean starred = reactionService.toggleStar(postId, userId);
-        int     count   = postRepo.findById(postId).orElseThrow().getStarsCount();
+        int count = postRepo.findById(postId).orElseThrow().getStarsCount();
         return ResponseEntity.ok(Map.of("starred", starred, "stars", count));
     }
-
 }

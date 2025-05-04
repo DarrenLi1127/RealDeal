@@ -3,6 +3,8 @@ import { useUser } from "@clerk/clerk-react";
 import PostModal from "./PostModal";
 import { Post } from "./types";
 import "../styles/Catalog.css";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Genre } from "./types";
 
 interface PostsResponse {
     content: Post[];
@@ -117,12 +119,24 @@ const Catalog = () => {
                                 {p.content.length > 100 ? p.content.slice(0, 100) + "…" : p.content}
                             </p>
                             <p className="post-date">{formatDate(p.createdAt)}</p>
+
+                            {/* Add genre display */}
+                            {p.genres && p.genres.length > 0 && (
+                                <div className="post-genres">
+                                    {p.genres.map(genre => (
+                                        <span key={genre.id} className="genre-badge">
+                            {genre.name}
+                        </span>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="card-reactions">
                 <span className={p.liked ? "liked" : ""}>
-                  {p.liked ? "♥" : "♡"} {p.likesCount || 0}
+                    {p.liked ? "♥" : "♡"} {p.likesCount || 0}
                 </span>
                                 <span className={p.starred ? "starred" : ""}>
-                  {p.starred ? "★" : "☆"} {p.starsCount || 0}
+                    {p.starred ? "★" : "☆"} {p.starsCount || 0}
                 </span>
                             </div>
                         </div>

@@ -1,23 +1,33 @@
 export interface PostImage {
+  id: string;
+  position: number;
+  url: string;
+}
+
+export interface Genre {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Post {
+  id: string;
+  userId: string;
+  username: string;
+  title: string;
+  content: string;
+  images: Array<{
     id: string;
     position: number;
     url: string;
-  }
-  
-  export interface Post {
-    id: string;
-    userId: string;
-    username: string;
-    title: string;
-    content: string;
-    images: PostImage[];
-    createdAt: string;
-    
-    likesCount?: number;
-    starsCount?: number;
-    liked?: boolean;
-    starred?: boolean;
-  }
+  }>;
+  createdAt: string;
+  likesCount: number;
+  starsCount: number;
+  liked: boolean;
+  starred: boolean;
+  genres: Genre[];
+}
 
 export interface Comment {
   id: string;
@@ -31,4 +41,5 @@ export interface Comment {
   liked: boolean;
   createdAt: string;
 }
+
   

@@ -610,3 +610,19 @@
     gap: 5px;
     margin-top: 20px;
 }
+
+.post-genres {
+    margin: 0.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.genre-badge {
+    background: #e2e8f0;
+    color: #4a5568;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}

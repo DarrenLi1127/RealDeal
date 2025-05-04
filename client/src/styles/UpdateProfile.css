@@ -205,3 +205,40 @@
     align-self: flex-start;
   }
 }
+
+.genre-section {
+  margin-top: 1.5rem;
+}
+
+.genre-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.genre-tag {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.genre-tag:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.genre-tag.selected {
+  border-color: #3182ce;
+  background: #3182ce;
+  color: white;
+}
+
+.genre-tag:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -32,11 +32,11 @@ public class UserProfile {
   private LocalDateTime createdAt = LocalDateTime.now();
 
   @Column(nullable = false)
-  private Integer experience = 0;               // grows forever
+  private Integer experience = 0;
 
   @Column(nullable = false)
-  private Integer level = 1;                    // 1‒30 cap
+  private Integer level = 1;
 
   @Column(name = "last_daily_exp")
-  private LocalDate lastDailyExp;               // for daily-login bonus
+  private LocalDate lastDailyExp;
 }
