@@ -11,6 +11,7 @@ import Dashboard from './routes/Dashboard';
 import UpdateProfile from './user_profile/UpdateProfile';
 import Profile from './user_profile/Profile';
 import CreatePost from './routes/CreatePost';
+import UserPosts from './user_profile/UserPosts';
 
 function App() {
     return (
@@ -40,7 +41,13 @@ function App() {
                                 <ProfileGate>
                                     <>
                                         <nav className="navbar">
-                                            <h1 className="logo">Real Deal</h1>
+                                            <div className="nav-left">
+                                                <h1 className="logo">Real Deal</h1>
+                                                <div className="nav-links">
+                                                    <Link to="/home">Home</Link>
+                                                    <Link to="/my-posts">My Posts</Link>
+                                                </div>
+                                            </div>
                                             <div className="nav-right">
                                                 <Link to="/new" className="create-post-btn" aria-label="Create new post">+</Link>
                                                 <UserButton
@@ -59,11 +66,14 @@ function App() {
                                                 path="/home"
                                                 element={<Dashboard />}
                                             />
-
+                                            <Route
+                                                path="/my-posts"
+                                                element={<UserPosts />}
+                                            />
                                             <Route
                                                 path="/new"
-                                                element={<CreatePost />} />
-
+                                                element={<CreatePost />}
+                                            />
                                             <Route
                                                 path="/profile"
                                                 element={<UpdateProfile />}

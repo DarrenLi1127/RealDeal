@@ -23,6 +23,9 @@ const Catalog = () => {
     const [totalPages,  setTotalPages]  = useState(0);
     const pageSize = 9;                       // 3×3 grid
 
+    /* -------------- recommendation tracking -------------- */
+    const [postsViewed, setPostsViewed] = useState(0);
+
     /* -------------- modal --------------- */
     const [selected,    setSelected]    = useState<Post | null>(null);
 
@@ -34,9 +37,10 @@ const Catalog = () => {
         const load = async () => {
             setLoading(true);
             try {
-                // Add userId to the API call if a user is logged in
+                // Add userId and postsViewed to the API call if a user is logged in
                 const userParam = user ? `&userId=${user.id}` : '';
-                const r = await fetch(`http://localhost:8080/api/posts/all?page=${page}&size=${pageSize}${userParam}`);
+                const viewedParam = user ? `&postsViewed=${postsViewed}` : '';
+                const r = await fetch(`http://localhost:8080/api/posts/all?page=${page}&size=${pageSize}${userParam}${viewedParam}`);
 
                 if (!r.ok) throw new Error(`fetch failed: ${r.status}`);
                 const data: PostsResponse = await r.json();
@@ -51,7 +55,7 @@ const Catalog = () => {
             }
         };
         load();
-    }, [page, user?.id]); // Add user?.id as a dependency
+    }, [page, user?.id, postsViewed]); // Add postsViewed as a dependency
 
     /* -------------- helpers ------------- */
     const formatDate = (s: string) =>
@@ -78,6 +82,21 @@ const Catalog = () => {
         }
     };
 
+    /* -------------- post view tracking ------------- */
+    const handlePostView = (post: Post) => {
+        // Track that user has viewed this post (for recommendation system)
+        setPostsViewed(prev => prev + 1);
+
+        // Open the modal
+        setSelected(post);
+    };
+
+    /* -------------- reset view counter ------------- */
+    // Reset postsViewed when user logs in/out
+    useEffect(() => {
+        setPostsViewed(0);
+    }, [user?.id]);
+
     /* -------------- render -------------- */
     return (
         <section className="catalog" aria-labelledby="catalog-heading">
@@ -102,7 +121,7 @@ const Catalog = () => {
             {/* -------- posts grid -------- */}
             <div className="posts-grid">
                 {posts.map(p => (
-                    <div key={p.id} className="post-card" onClick={() => setSelected(p)}>
+                    <div key={p.id} className="post-card" onClick={() => handlePostView(p)}>
                         {p.images.length > 0 && (
                             <div className="post-image">
                                 <img src={p.images[0].url} alt={`${p.title} cover`} />

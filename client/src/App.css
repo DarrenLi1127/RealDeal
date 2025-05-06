@@ -40,7 +40,6 @@ body {
   background: var(--clr-surface);
   box-shadow: var(--shadow-md);
   border-radius: 0;               /* flush with edges; set to 12px if you prefer rounded */
-  padding: 2.5rem 4rem;
   display: flex;
   flex-direction: column;
 }
@@ -63,12 +62,14 @@ button:focus-visible {
 }
 
 /* ---------- Auth Views ---------- */
-.signed-out-container,
-.signed-in-container {
+.signed-out-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   gap: 1.5rem;
+  padding: 2.5rem 4rem;
 }
 
 h1 {
@@ -96,12 +97,56 @@ p {
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid #e5e5e5;
+  background: var(--clr-surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 30px;
 }
 
 .logo {
   margin: 0;
   font-weight: 600;
   font-size: 1.25rem;
+  color: var(--clr-primary);
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--clr-text-light);
+  font-weight: 500;
+  padding: 5px 0;
+  position: relative;
+  transition: color var(--transition);
+}
+
+.nav-links a:hover {
+  color: var(--clr-primary);
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: var(--clr-primary);
+  transition: width var(--transition);
+}
+
+.nav-links a:hover::after {
+  width: 100%;
 }
 
 .nav-right {
@@ -150,14 +195,34 @@ p {
 
 /* ---------- Responsiveness ---------- */
 @media (max-width: 768px) {
-  .App {
+  .navbar {
+    flex-direction: column;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .nav-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nav-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .nav-links {
+    gap: 15px;
+  }
+
+  .signed-out-container {
     padding: 2rem 1.5rem;
   }
+
   button,
   .toolbar select,
   .toolbar input {
     width: 100%;
   }
 }
-
 

@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.UUID;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -77,5 +78,48 @@ public class PostService {
 
         if (images == null || images.isEmpty())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "at least one image required");
+    }
+
+    /**
+     * Get posts by user ID with pagination
+     */
+    public Page<Post> getPostsByUserId(String userId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findByUserId(userId, pageRequest);
+    }
+
+    /**
+     * Update an existing post (title and content only)
+     */
+    public Post updatePost(UUID postId, String title, String content) {
+        // Validate input
+        if (title == null || title.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title required");
+        }
+        if (content == null || content.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "content required");
+        }
+
+        // Get the post
+        Post post = postRepo.findById(postId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        // Update fields
+        post.setTitle(title.trim());
+        post.setContent(content.trim());
+
+        // Save and return
+        return postRepo.save(post);
+    }
+
+    /**
+     * Delete a post
+     */
+    public void deletePost(UUID postId) {
+        if (!postRepo.existsById(postId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+
+        postRepo.deleteById(postId);
     }
 }

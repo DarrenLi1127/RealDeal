@@ -1,4 +1,3 @@
-// client/src/catalog/CommentItem.tsx
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Comment } from "./types";
