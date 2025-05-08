@@ -1,12 +1,14 @@
 package com.realdeal.backend.post.service;
 
+import com.realdeal.backend.post.model.PostLike;
+import com.realdeal.backend.post.model.PostStar;
 import com.realdeal.backend.post.model.pk.PostLikePK;
 import com.realdeal.backend.post.model.pk.PostStarPK;
 import com.realdeal.backend.post.repository.*;
-import com.realdeal.backend.post.model.PostLike;
-import com.realdeal.backend.post.model.PostStar;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -20,29 +22,26 @@ public class ReactionService {
     private final PostStarRepository starRepo;
     private final PostRepository     postRepo;
 
-    /* -------- like -------- */
+    @Caching(evict = @CacheEvict(cacheNames = "postsPages", allEntries = true))
     public boolean toggleLike(UUID postId, String userId) {
         PostLikePK pk = new PostLikePK(postId, userId);
-
-        if (likeRepo.existsById(pk)) {          // currently liked → remove
+        if (likeRepo.existsById(pk)) {
             likeRepo.deleteById(pk);
             postRepo.decrementLikes(postId);
-            return false;                       // now un-liked
-        } else {                                // not liked yet → add
+            return false;
+        } else {
             PostLike like = new PostLike();
             like.setPostId(postId);
             like.setUserId(userId);
             likeRepo.save(like);
-
             postRepo.incrementLikes(postId);
-            return true;                        // now liked
+            return true;
         }
     }
 
-    /* -------- star -------- */
+    @Caching(evict = @CacheEvict(cacheNames = "postsPages", allEntries = true))
     public boolean toggleStar(UUID postId, String userId) {
         PostStarPK pk = new PostStarPK(postId, userId);
-
         if (starRepo.existsById(pk)) {
             starRepo.deleteById(pk);
             postRepo.decrementStars(postId);
@@ -52,12 +51,10 @@ public class ReactionService {
             star.setPostId(postId);
             star.setUserId(userId);
             starRepo.save(star);
-
             postRepo.incrementStars(postId);
             return true;
         }
     }
-
 
     public boolean hasLiked(UUID postId, String userId) {
         return likeRepo.existsByPostIdAndUserId(postId, userId);

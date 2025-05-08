@@ -6,7 +6,10 @@ import com.realdeal.backend.post.model.PostImage;
 import com.realdeal.backend.post.repository.PostRepository;
 import com.realdeal.backend.storage.service.UploadService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -23,9 +26,10 @@ import java.util.stream.IntStream;
 public class PostService {
 
     private final PostRepository postRepo;
-    private final UploadService  uploadService;
+    private final UploadService uploadService;
     private final ExperienceService experienceService;
 
+    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
     public Post createPost(String userId,
         String title,
         String content,
@@ -57,9 +61,25 @@ public class PostService {
         return postRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    // Method that builds a Page from separately cached components
     public Page<Post> getPaginatedPosts(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return postRepo.findAll(pageRequest);
+        List<Post> content = getPostsContent(page, size);
+        long total = getPostsCount();
+        return new PageImpl<>(content, pageRequest, total);
+    }
+
+    // Cache the content separately
+    @Cacheable(cacheNames = "postsContent", key = "'page:' + #page + ':size:' + #size")
+    public List<Post> getPostsContent(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findAll(pageRequest).getContent();
+    }
+
+    // Cache the count separately
+    @Cacheable(cacheNames = "postsCount")
+    public long getPostsCount() {
+        return postRepo.count();
     }
 
     private void validate(String userId,
@@ -91,6 +111,7 @@ public class PostService {
     /**
      * Update an existing post (title and content only)
      */
+    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
     public Post updatePost(UUID postId, String title, String content) {
         // Validate input
         if (title == null || title.isBlank()) {
@@ -115,6 +136,7 @@ public class PostService {
     /**
      * Delete a post
      */
+    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
     public void deletePost(UUID postId) {
         if (!postRepo.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
