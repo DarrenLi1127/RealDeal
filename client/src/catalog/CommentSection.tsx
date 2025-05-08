@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Comment } from "./types";
 import CommentItem from "./CommentItem";
@@ -8,6 +8,13 @@ interface CommentSectionProps {
     onCommentAdded?: () => void;
 }
 
+// Comment cache interface
+interface CommentCacheEntry {
+    comments: Comment[];
+    totalPages: number;
+    timestamp: number;
+}
+
 const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(false);
@@ -15,36 +22,139 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
     const [newComment, setNewComment] = useState("");
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [isCached, setIsCached] = useState(false);
     const { user } = useUser();
     const API_BASE_URL = 'http://localhost:8080/api';
 
-    // Fetch comments
-    useEffect(() => {
-        const fetchComments = async () => {
-            setLoading(true);
-            try {
-                const userParam = user ? `&userId=${user.id}` : '';
-                const response = await fetch(
-                    `${API_BASE_URL}/comments/post/${postId}?page=${page}&size=10${userParam}`
-                );
+    // Prefetch adjacent comment pages
+    const prefetchAdjacentPages = useCallback((currentPage: number, maxPages: number) => {
+        if (!user) return;
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch comments: ${response.status}`);
+        // Prefetch next page
+        if (currentPage < maxPages - 1) {
+            setTimeout(() => {
+                const nextPage = currentPage + 1;
+                const cacheKey = `comments_post_${postId}_page_${nextPage}_user_${user?.id || 'guest'}`;
+
+                // Check if already cached
+                if (!sessionStorage.getItem(cacheKey)) {
+                    console.log('Prefetching next comment page:', nextPage);
+                    fetch(`${API_BASE_URL}/comments/post/${postId}?page=${nextPage}&size=10&userId=${user.id}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const cacheData: CommentCacheEntry = {
+                                comments: data.content,
+                                totalPages: data.totalPages,
+                                timestamp: Date.now()
+                            };
+                            sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                        })
+                        .catch(() => {/* Silently fail on prefetch errors */});
                 }
+            }, 300);
+        }
 
-                const data = await response.json();
-                setComments(data.content);
-                setTotalPages(data.totalPages);
-                setError(null);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to load comments");
-            } finally {
-                setLoading(false);
+        // Prefetch previous page
+        if (currentPage > 0) {
+            setTimeout(() => {
+                const prevPage = currentPage - 1;
+                const cacheKey = `comments_post_${postId}_page_${prevPage}_user_${user?.id || 'guest'}`;
+
+                // Check if already cached
+                if (!sessionStorage.getItem(cacheKey)) {
+                    console.log('Prefetching previous comment page:', prevPage);
+                    fetch(`${API_BASE_URL}/comments/post/${postId}?page=${prevPage}&size=10&userId=${user.id}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const cacheData: CommentCacheEntry = {
+                                comments: data.content,
+                                totalPages: data.totalPages,
+                                timestamp: Date.now()
+                            };
+                            sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                        })
+                        .catch(() => {/* Silently fail on prefetch errors */});
+                }
+            }, 300);
+        }
+    }, [API_BASE_URL, postId, user]);
+
+    // Fetch comments with caching
+    const fetchComments = useCallback(async () => {
+        setLoading(true);
+        setIsCached(false);
+
+        const cacheKey = `comments_post_${postId}_page_${page}_user_${user?.id || 'guest'}`;
+
+        try {
+            // Check cache first
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    const parsedCache = JSON.parse(cachedData) as CommentCacheEntry;
+
+                    // Only use cache if it's less than 2 minutes old
+                    if (Date.now() - parsedCache.timestamp < 2 * 60 * 1000) {
+                        console.log('Using cached comments for page:', page);
+                        setComments(parsedCache.comments);
+                        setTotalPages(parsedCache.totalPages);
+                        setError(null);
+                        setIsCached(true);
+                        setLoading(false);
+
+                        // Still prefetch adjacent pages
+                        prefetchAdjacentPages(page, parsedCache.totalPages);
+                        return;
+                    } else {
+                        // Cache expired
+                        sessionStorage.removeItem(cacheKey);
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                } catch (e) {
+                    // Invalid cache format
+                    sessionStorage.removeItem(cacheKey);
+                }
             }
-        };
 
+            // No valid cache, fetch from API
+            console.log('Fetching comments from server for page:', page);
+            const userParam = user ? `&userId=${user.id}` : '';
+            const response = await fetch(
+                `${API_BASE_URL}/comments/post/${postId}?page=${page}&size=10${userParam}`
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch comments: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Save to cache
+            const cacheData: CommentCacheEntry = {
+                comments: data.content,
+                totalPages: data.totalPages,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
+            setComments(data.content);
+            setTotalPages(data.totalPages);
+            setError(null);
+
+            // Prefetch adjacent pages
+            prefetchAdjacentPages(page, data.totalPages);
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to load comments");
+        } finally {
+            setLoading(false);
+        }
+    }, [postId, page, user, prefetchAdjacentPages]);
+
+    // Load comments when dependencies change
+    useEffect(() => {
         fetchComments();
-    }, [postId, page, user?.id]);
+    }, [fetchComments]);
 
     // Add a new comment
     const handleAddComment = async () => {
@@ -73,6 +183,14 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
             setComments([addedComment, ...comments]);
             setNewComment("");
 
+            // Invalidate comment caches for this post
+            const cacheKeyPrefix = `comments_post_${postId}`;
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith(cacheKeyPrefix)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+
             // Notify parent component if needed
             if (onCommentAdded) {
                 onCommentAdded();
@@ -82,28 +200,70 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
         }
     };
 
-    // Handle comment updates (like adding a reply or liking)
+    // Handle comment updates (like adding a reply or liking) with cache invalidation
     const handleCommentUpdate = (updatedComment: Comment) => {
         setComments(currentComments =>
             currentComments.map(comment =>
                 comment.id === updatedComment.id ? updatedComment : comment
             )
         );
+
+        // Update the cache for current page
+        const cacheKey = `comments_post_${postId}_page_${page}_user_${user?.id || 'guest'}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+
+        if (cachedData) {
+            try {
+                const parsedCache = JSON.parse(cachedData) as CommentCacheEntry;
+                const updatedComments = parsedCache.comments.map(comment =>
+                    comment.id === updatedComment.id ? updatedComment : comment
+                );
+
+                const updatedCache: CommentCacheEntry = {
+                    comments: updatedComments,
+                    totalPages: parsedCache.totalPages,
+                    timestamp: Date.now() // Update timestamp to extend TTL
+                };
+
+                sessionStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                // If there's any issue with cache updating, just remove it
+                sessionStorage.removeItem(cacheKey);
+            }
+        }
+    };
+
+    // Page change handler with smooth scrolling
+    const handlePageChange = (newPage: number) => {
+        // Scroll to top of comment section
+        const commentSection = document.querySelector('.comment-section');
+        if (commentSection) {
+            commentSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        setPage(newPage);
     };
 
     return (
         <div className="comment-section">
-            <h3 className="comment-section-title">Comments</h3>
+            <h3 className="comment-section-title">
+                Comments
+                {isCached &&
+                    <span className="cached-indicator" title="Loaded from cache" style={{ fontSize: '0.8em', marginLeft: '8px', color: '#888' }}>
+                        (cached)
+                    </span>
+                }
+            </h3>
 
             {/* Add comment form */}
             {user ? (
                 <div className="comment-form">
-          <textarea
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="comment-input"
-          />
+                    <textarea
+                        placeholder="Add a comment..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="comment-input"
+                    />
                     <button
                         onClick={handleAddComment}
                         disabled={!newComment.trim()}
@@ -143,7 +303,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
                 <div className="comment-pagination">
                     <button
                         disabled={page === 0}
-                        onClick={() => setPage(p => p - 1)}
+                        onClick={() => handlePageChange(page - 1)}
                         className="pagination-button"
                     >
                         &laquo; Previous
@@ -153,7 +313,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
                         <button
                             key={i}
                             className={`pagination-button ${i === page ? "active" : ""}`}
-                            onClick={() => setPage(i)}
+                            onClick={() => handlePageChange(i)}
                         >
                             {i + 1}
                         </button>
@@ -161,7 +321,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
 
                     <button
                         disabled={page === totalPages - 1}
-                        onClick={() => setPage(p => p + 1)}
+                        onClick={() => handlePageChange(page + 1)}
                         className="pagination-button"
                     >
                         Next &raquo;

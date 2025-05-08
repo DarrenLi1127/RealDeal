@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Comment } from "./types";
 
@@ -9,14 +9,48 @@ interface CommentItemProps {
     isReply?: boolean;
 }
 
+// Cache interface for comment likes
+interface LikeCacheEntry {
+    liked: boolean;
+    likesCount: number;
+    timestamp: number;
+}
+
 const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItemProps) => {
     const [replying, setReplying] = useState(false);
     const [replyContent, setReplyContent] = useState("");
     const [showReplies, setShowReplies] = useState(true);
     const [liked, setLiked] = useState(comment.liked);
     const [likesCount, setLikesCount] = useState(comment.likesCount);
+    const [likeInProgress, setLikeInProgress] = useState(false); // Prevent double-clicks
     const { user } = useUser();
     const API_BASE_URL = 'http://localhost:8080/api';
+
+    // Initialize from cache if available
+    useEffect(() => {
+        if (!user) return;
+
+        const likeKey = `comment_like_${comment.id}_${user.id}`;
+        const cachedLike = sessionStorage.getItem(likeKey);
+
+        if (cachedLike) {
+            try {
+                const likeData = JSON.parse(cachedLike) as LikeCacheEntry;
+                // Only use cache if it's less than 5 minutes old
+                if (Date.now() - likeData.timestamp < 5 * 60 * 1000) {
+                    setLiked(likeData.liked);
+                    setLikesCount(likeData.likesCount);
+                } else {
+                    // Cache expired, remove it
+                    sessionStorage.removeItem(likeKey);
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                // Handle invalid JSON
+                sessionStorage.removeItem(likeKey);
+            }
+        }
+    }, [comment.id, user]);
 
     // Format date
     const formatDate = (dateString: string) => {
@@ -29,9 +63,25 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
         });
     };
 
-    // Handle like
+    // Handle like with caching
     const handleLike = async () => {
-        if (!user) return;
+        if (!user || likeInProgress) return;
+
+        // Optimistic UI update
+        const newLiked = !liked;
+        const newCount = liked ? likesCount - 1 : likesCount + 1;
+        setLiked(newLiked);
+        setLikesCount(newCount);
+        setLikeInProgress(true);
+
+        // Cache the optimistic update immediately
+        const likeKey = `comment_like_${comment.id}_${user.id}`;
+        const cacheData: LikeCacheEntry = {
+            liked: newLiked,
+            likesCount: newCount,
+            timestamp: Date.now()
+        };
+        sessionStorage.setItem(likeKey, JSON.stringify(cacheData));
 
         try {
             const response = await fetch(`${API_BASE_URL}/comments/${comment.id}/like?userId=${user.id}`, {
@@ -46,8 +96,18 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
             }
 
             const result = await response.json();
+
+            // Update with server response
             setLiked(result.liked);
             setLikesCount(result.likes);
+
+            // Update cache with server response
+            const updatedCacheData: LikeCacheEntry = {
+                liked: result.liked,
+                likesCount: result.likes,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(likeKey, JSON.stringify(updatedCacheData));
 
             // Update parent component
             onUpdate({
@@ -57,6 +117,13 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
             });
         } catch (err) {
             console.error(err);
+            // Revert optimistic update on error
+            setLiked(liked);
+            setLikesCount(likesCount);
+            // Remove invalid cache
+            sessionStorage.removeItem(likeKey);
+        } finally {
+            setLikeInProgress(false);
         }
     };
 
@@ -93,6 +160,14 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
             onUpdate(updatedComment);
             setReplyContent("");
             setReplying(false);
+
+            // Invalidate any comment cache for this post
+            const cacheKeyPrefix = `comments_post_${postId}`;
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith(cacheKeyPrefix)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
         } catch (err) {
             console.error(err);
         }
@@ -111,6 +186,7 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
                 <button
                     className={`comment-like-btn ${liked ? 'active' : ''}`}
                     onClick={handleLike}
+                    disabled={likeInProgress}
                     aria-label={liked ? "Unlike" : "Like"}
                 >
                     {liked ? "♥" : "♡"} {likesCount > 0 ? likesCount : ""}
@@ -138,12 +214,12 @@ const CommentItem = ({ comment, postId, onUpdate, isReply = false }: CommentItem
             {/* Reply form */}
             {replying && (
                 <div className="reply-form">
-          <textarea
-              placeholder="Write a reply..."
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              className="reply-input"
-          />
+                    <textarea
+                        placeholder="Write a reply..."
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        className="reply-input"
+                    />
                     <div className="reply-form-actions">
                         <button
                             onClick={() => setReplying(false)}
