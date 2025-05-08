@@ -8,6 +8,7 @@ import com.realdeal.backend.post.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +21,14 @@ public class ReactionService {
 
     private final PostLikeRepository likeRepo;
     private final PostStarRepository starRepo;
-    private final PostRepository     postRepo;
+    private final PostRepository postRepo;
 
-    @Caching(evict = @CacheEvict(cacheNames = "postsPages", allEntries = true))
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "postsContent", allEntries = true),
+        @CacheEvict(cacheNames = "postLikes", key = "#postId + ':' + #userId"),
+        @CacheEvict(cacheNames = "allPosts", allEntries = true), // Added to ensure consistency
+        @CacheEvict(cacheNames = "singlePost", key = "#postId") // Added to ensure consistency
+    })
     public boolean toggleLike(UUID postId, String userId) {
         PostLikePK pk = new PostLikePK(postId, userId);
         if (likeRepo.existsById(pk)) {
@@ -39,7 +45,12 @@ public class ReactionService {
         }
     }
 
-    @Caching(evict = @CacheEvict(cacheNames = "postsPages", allEntries = true))
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "postsContent", allEntries = true),
+        @CacheEvict(cacheNames = "postStars", key = "#postId + ':' + #userId"),
+        @CacheEvict(cacheNames = "allPosts", allEntries = true), // Added to ensure consistency
+        @CacheEvict(cacheNames = "singlePost", key = "#postId") // Added to ensure consistency
+    })
     public boolean toggleStar(UUID postId, String userId) {
         PostStarPK pk = new PostStarPK(postId, userId);
         if (starRepo.existsById(pk)) {
@@ -56,10 +67,12 @@ public class ReactionService {
         }
     }
 
+    @Cacheable(cacheNames = "postLikes", key = "#postId + ':' + #userId")
     public boolean hasLiked(UUID postId, String userId) {
         return likeRepo.existsByPostIdAndUserId(postId, userId);
     }
 
+    @Cacheable(cacheNames = "postStars", key = "#postId + ':' + #userId")
     public boolean hasStarred(UUID postId, String userId) {
         return starRepo.existsByPostIdAndUserId(postId, userId);
     }

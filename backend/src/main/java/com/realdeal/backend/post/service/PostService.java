@@ -8,6 +8,7 @@ import com.realdeal.backend.storage.service.UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -18,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.UUID;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -29,7 +32,12 @@ public class PostService {
     private final UploadService uploadService;
     private final ExperienceService experienceService;
 
-    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "postsContent", allEntries = true),
+        @CacheEvict(cacheNames = "postsCount", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsContent", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsCount", allEntries = true)
+    })
     public Post createPost(String userId,
         String title,
         String content,
@@ -57,6 +65,7 @@ public class PostService {
         return postRepo.save(post);
     }
 
+    @Cacheable(cacheNames = "allPosts")
     public List<Post> listAll() {
         return postRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
@@ -82,6 +91,12 @@ public class PostService {
         return postRepo.count();
     }
 
+    @Cacheable(cacheNames = "singlePost", key = "#postId")
+    public Post getPostById(UUID postId) {
+        return postRepo.findById(postId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+    }
+
     private void validate(String userId,
         String title,
         String content,
@@ -102,16 +117,42 @@ public class PostService {
 
     /**
      * Get posts by user ID with pagination
+     * This method splits caching of content and count to avoid PageImpl serialization issues
      */
     public Page<Post> getPostsByUserId(String userId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return postRepo.findByUserId(userId, pageRequest);
+        List<Post> content = getUserPostsContent(userId, page, size);
+        long count = getUserPostsCount(userId);
+        return new PageImpl<>(content, pageRequest, count);
+    }
+
+    /**
+     * Cache only the content for user posts
+     */
+    @Cacheable(cacheNames = "userPostsContent", key = "#userId + ':page:' + #page + ':size:' + #size")
+    public List<Post> getUserPostsContent(String userId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findByUserId(userId, pageRequest).getContent();
+    }
+
+    /**
+     * Cache only the count for user posts
+     */
+    @Cacheable(cacheNames = "userPostsCount", key = "#userId")
+    public long getUserPostsCount(String userId) {
+        return postRepo.countByUserId(userId);
     }
 
     /**
      * Update an existing post (title and content only)
      */
-    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "postsContent", allEntries = true),
+        @CacheEvict(cacheNames = "singlePost", key = "#postId"),
+        @CacheEvict(cacheNames = "allPosts", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsContent", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsCount", allEntries = true)
+    })
     public Post updatePost(UUID postId, String title, String content) {
         // Validate input
         if (title == null || title.isBlank()) {
@@ -136,7 +177,16 @@ public class PostService {
     /**
      * Delete a post
      */
-    @CacheEvict(cacheNames = {"postsContent", "postsCount"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "postsContent", allEntries = true),
+        @CacheEvict(cacheNames = "postsCount", allEntries = true),
+        @CacheEvict(cacheNames = "singlePost", key = "#postId"),
+        @CacheEvict(cacheNames = "allPosts", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsContent", allEntries = true),
+        @CacheEvict(cacheNames = "userPostsCount", allEntries = true),
+        @CacheEvict(cacheNames = "topLevelComments", allEntries = true),
+        @CacheEvict(cacheNames = "allComments", allEntries = true)
+    })
     public void deletePost(UUID postId) {
         if (!postRepo.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");

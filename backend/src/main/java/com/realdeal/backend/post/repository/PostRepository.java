@@ -30,4 +30,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     void decrementStars(@Param("id") UUID id);
 
     Page<Post> findByUserId(String userId, Pageable pageable);
+
+    long countByUserId(String userId);
 }
