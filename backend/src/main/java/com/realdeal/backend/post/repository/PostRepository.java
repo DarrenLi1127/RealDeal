@@ -32,4 +32,56 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     Page<Post> findByUserId(String userId, Pageable pageable);
 
     long countByUserId(String userId);
+
+    @Query("""
+           SELECT p FROM Post p
+           WHERE p.id IN (
+               SELECT l.postId
+               FROM PostLike l
+               WHERE l.userId = :uid
+           )
+           """)
+    Page<Post> findLikedByUserId(@Param("uid") String userId, Pageable pageable);
+
+    @Query("""
+           SELECT COUNT(p) FROM Post p
+           WHERE p.id IN (
+               SELECT l.postId
+               FROM PostLike l
+               WHERE l.userId = :uid
+           )
+           """)
+    long countLikedByUserId(@Param("uid") String userId);
+
+    /* ---------- NEW : posts the user has STARRED ---------- */
+    @Query("""
+           SELECT p FROM Post p
+           WHERE p.id IN (
+               SELECT s.postId
+               FROM PostStar s
+               WHERE s.userId = :uid
+           )
+           """)
+    Page<Post> findStarredByUserId(@Param("uid") String userId, Pageable pageable);
+
+    @Query("""
+           SELECT COUNT(p) FROM Post p
+           WHERE p.id IN (
+               SELECT s.postId
+               FROM PostStar s
+               WHERE s.userId = :uid
+           )
+           """)
+    long countStarredByUserId(@Param("uid") String userId);
+
+
+
+
+
+    @Query("""
+           SELECT p FROM Post p
+           WHERE lower(p.title)   LIKE lower(concat('%', :q, '%'))
+              OR lower(p.content) LIKE lower(concat('%', :q, '%'))
+           """)
+    Page<Post> search(@Param("q") String q, Pageable pageable);
 }

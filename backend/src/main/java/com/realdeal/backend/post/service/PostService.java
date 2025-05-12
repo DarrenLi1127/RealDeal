@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 import java.util.ArrayList;
@@ -36,7 +37,9 @@ public class PostService {
         @CacheEvict(cacheNames = "postsContent", allEntries = true),
         @CacheEvict(cacheNames = "postsCount", allEntries = true),
         @CacheEvict(cacheNames = "userPostsContent", allEntries = true),
-        @CacheEvict(cacheNames = "userPostsCount", allEntries = true)
+        @CacheEvict(cacheNames = "userPostsCount", allEntries = true),
+        @CacheEvict(cacheNames="searchPostsContent", allEntries=true),
+        @CacheEvict(cacheNames="searchPostsCount",   allEntries=true)
     })
     public Post createPost(String userId,
         String title,
@@ -115,6 +118,7 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "at least one image required");
     }
 
+
     /**
      * Get posts by user ID with pagination
      * This method splits caching of content and count to avoid PageImpl serialization issues
@@ -141,6 +145,50 @@ public class PostService {
     @Cacheable(cacheNames = "userPostsCount", key = "#userId")
     public long getUserPostsCount(String userId) {
         return postRepo.countByUserId(userId);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /*                       NEW :  LIKED  POSTS                              */
+    /* --------------------------------------------------------------------- */
+    public Page<Post> getLikedPosts(String userId, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Post> content = getLikedPostsContent(userId, page, size);
+        long count = getLikedPostsCount(userId);
+        return new PageImpl<>(content, pr, count);
+    }
+
+    @Cacheable(cacheNames = "likedPostsContent",
+        key = "#userId + ':page:' + #page + ':size:' + #size")
+    public List<Post> getLikedPostsContent(String userId, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findLikedByUserId(userId, pr).getContent();
+    }
+
+    @Cacheable(cacheNames = "likedPostsCount", key = "#userId")
+    public long getLikedPostsCount(String userId) {
+        return postRepo.countLikedByUserId(userId);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /*                      NEW :  STARRED  POSTS                             */
+    /* --------------------------------------------------------------------- */
+    public Page<Post> getStarredPosts(String userId, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Post> content = getStarredPostsContent(userId, page, size);
+        long count = getStarredPostsCount(userId);
+        return new PageImpl<>(content, pr, count);
+    }
+
+    @Cacheable(cacheNames = "starredPostsContent",
+        key = "#userId + ':page:' + #page + ':size:' + #size")
+    public List<Post> getStarredPostsContent(String userId, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.findStarredByUserId(userId, pr).getContent();
+    }
+
+    @Cacheable(cacheNames = "starredPostsCount", key = "#userId")
+    public long getStarredPostsCount(String userId) {
+        return postRepo.countStarredByUserId(userId);
     }
 
     /**
@@ -185,7 +233,9 @@ public class PostService {
         @CacheEvict(cacheNames = "userPostsContent", allEntries = true),
         @CacheEvict(cacheNames = "userPostsCount", allEntries = true),
         @CacheEvict(cacheNames = "topLevelComments", allEntries = true),
-        @CacheEvict(cacheNames = "allComments", allEntries = true)
+        @CacheEvict(cacheNames = "allComments", allEntries = true),
+        @CacheEvict(cacheNames="searchPostsContent", allEntries=true),
+        @CacheEvict(cacheNames="searchPostsCount",   allEntries=true)
     })
     public void deletePost(UUID postId) {
         if (!postRepo.existsById(postId)) {
@@ -193,5 +243,24 @@ public class PostService {
         }
 
         postRepo.deleteById(postId);
+    }
+
+    public Page<Post> search(String query, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Post> content = getSearchContent(query, page, size);
+        long       count   = getSearchCount(query);
+        return new PageImpl<>(content, pr, count);
+    }
+
+    @Cacheable(cacheNames="searchPostsContent",
+        key = "#query.toLowerCase() + ':page:' + #page + ':size:' + #size")
+    public List<Post> getSearchContent(String query, int page, int size) {
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepo.search(query, pr).getContent();
+    }
+
+    @Cacheable(cacheNames="searchPostsCount", key = "#query.toLowerCase()")
+    public long getSearchCount(String query) {
+        return postRepo.search(query, Pageable.unpaged()).getTotalElements();
     }
 }

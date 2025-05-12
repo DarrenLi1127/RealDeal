@@ -270,4 +270,75 @@ public class PostController {
         int count = postRepo.findById(postId).orElseThrow().getStarsCount();
         return ResponseEntity.ok(Map.of("starred", starred, "stars", count));
     }
+
+    @GetMapping("/liked/{userId}")
+    public ResponseEntity<Page<PostWithUserDTO>> liked(
+        @PathVariable String userId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "9") int size,
+        @RequestParam(required = false) String currentUserId) {
+
+        Page<Post> posts = postService.getLikedPosts(userId, page, size);
+        return ResponseEntity.ok(toDtoPage(posts, currentUserId));
+    }
+
+    /* =======================================================================
+     *                    NEW   /starred/{userId}
+     * ======================================================================= */
+    @GetMapping("/starred/{userId}")
+    public ResponseEntity<Page<PostWithUserDTO>> starred(
+        @PathVariable String userId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "9") int size,
+        @RequestParam(required = false) String currentUserId) {
+
+        Page<Post> posts = postService.getStarredPosts(userId, page, size);
+        return ResponseEntity.ok(toDtoPage(posts, currentUserId));
+    }
+
+    @GetMapping("/search/posts")    //  ← unique, constant path
+    public Page<PostWithUserDTO> search(
+        @RequestParam String q,
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="9") int size,
+        @RequestParam(required=false) String currentUserId) {
+
+        Page<Post> result = postService.search(q, page, size);
+        return toDtoPage(result, currentUserId);
+    }
+
+    /* ---------------------------------------------------------------------
+       shared helper that maps Post → PostWithUserDTO (genres + reactions)
+       ------------------------------------------------------------------- */
+    private Page<PostWithUserDTO> toDtoPage(Page<Post> posts, String viewerId) {
+
+        /* batch-lookup usernames */
+        Map<String, String> usernameMap = userProfileService
+            .getUsernamesByUserIds(
+                posts.getContent().stream()
+                    .map(Post::getUserId)
+                    .distinct()
+                    .toList());
+
+        List<PostWithUserDTO> dtoList = posts.getContent().stream().map(p -> {
+
+            String username = usernameMap.getOrDefault(p.getUserId(), "Unknown User");
+            boolean liked = false, starred = false;
+
+            if (viewerId != null) {
+                liked   = reactionService.hasLiked  (p.getId(), viewerId);
+                starred = reactionService.hasStarred(p.getId(), viewerId);
+            }
+
+            List<GenreDTO> genres = genreService.getPostGenres(p.getId()).stream()
+                .map(g -> new GenreDTO(g.getId(), g.getName(), g.getDescription()))
+                .collect(Collectors.toList());
+
+            return PostWithUserDTO.fromPost(p, username, liked, starred, genres);
+        }).toList();
+
+        return new PageImpl<>(dtoList, posts.getPageable(), posts.getTotalElements());
+    }
+
+
 }

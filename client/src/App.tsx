@@ -12,6 +12,10 @@ import UpdateProfile from './user_profile/UpdateProfile';
 import Profile from './user_profile/Profile';
 import CreatePost from './routes/CreatePost';
 import UserPosts from './user_profile/UserPosts';
+import UserLikedPosts   from './user_profile/UserLikedPosts';
+import UserStarredPosts from './user_profile/UserStarredPosts';
+import SearchBar      from "./catalog/SearchBar";
+import SearchResults  from "./routes/SearchResults";
 
 function App() {
     return (
@@ -46,8 +50,11 @@ function App() {
                                                 <div className="nav-links">
                                                     <Link to="/home">Home</Link>
                                                     <Link to="/my-posts">My Posts</Link>
+                                                    <Link to="/liked-posts">Liked Posts</Link>
+                                                    <Link to="/starred-posts">Starred Posts</Link>
                                                 </div>
                                             </div>
+                                            <SearchBar />
                                             <div className="nav-right">
                                                 <Link to="/new" className="create-post-btn" aria-label="Create new post">+</Link>
                                                 <UserButton
@@ -70,6 +77,9 @@ function App() {
                                                 path="/my-posts"
                                                 element={<UserPosts />}
                                             />
+                                            <Route path="/liked-posts"   element={<UserLikedPosts />} />
+                                            <Route path="/starred-posts" element={<UserStarredPosts />} />
+                                            <Route path="/search" element={<SearchResults />} />
                                             <Route
                                                 path="/new"
                                                 element={<CreatePost />}
