@@ -1,5 +1,6 @@
 package com.realdeal.backend.post.service;
 
+import com.realdeal.backend.exp.service.ExperienceService;
 import com.realdeal.backend.post.model.PostLike;
 import com.realdeal.backend.post.model.PostStar;
 import com.realdeal.backend.post.model.pk.PostLikePK;
@@ -22,6 +23,9 @@ public class ReactionService {
     private final PostLikeRepository likeRepo;
     private final PostStarRepository starRepo;
     private final PostRepository postRepo;
+    private final ExperienceService experienceService;
+
+    private static final int EXP_PER_REACTION = 2;
 
     @Caching(evict = {
         @CacheEvict(cacheNames = "postsContent", allEntries = true),
@@ -31,9 +35,14 @@ public class ReactionService {
     })
     public boolean toggleLike(UUID postId, String userId) {
         PostLikePK pk = new PostLikePK(postId, userId);
-        if (likeRepo.existsById(pk)) {
+        if (likeRepo.existsById(pk)) {                 // reaction removed
             likeRepo.deleteById(pk);
             postRepo.decrementLikes(postId);
+
+            String ownerId = postRepo.findById(postId).orElseThrow().getUserId();
+            if (!ownerId.equals(userId)) {
+                experienceService.addExp(ownerId, -EXP_PER_REACTION);   // ← deduct EXP
+            }
             return false;
         } else {
             PostLike like = new PostLike();
@@ -41,6 +50,13 @@ public class ReactionService {
             like.setUserId(userId);
             likeRepo.save(like);
             postRepo.incrementLikes(postId);
+
+            String ownerId = postRepo.findById(postId).orElseThrow()
+                .getUserId();
+            if (!ownerId.equals(userId)) {
+                experienceService.addExp(ownerId, EXP_PER_REACTION);
+            }
+
             return true;
         }
     }
@@ -53,9 +69,14 @@ public class ReactionService {
     })
     public boolean toggleStar(UUID postId, String userId) {
         PostStarPK pk = new PostStarPK(postId, userId);
-        if (starRepo.existsById(pk)) {
+        if (starRepo.existsById(pk)) {                 // reaction removed
             starRepo.deleteById(pk);
             postRepo.decrementStars(postId);
+
+            String ownerId = postRepo.findById(postId).orElseThrow().getUserId();
+            if (!ownerId.equals(userId)) {             // skip self-unstar
+                experienceService.addExp(ownerId, -EXP_PER_REACTION);   // ← deduct EXP
+            }
             return false;
         } else {
             PostStar star = new PostStar();
@@ -63,6 +84,13 @@ public class ReactionService {
             star.setUserId(userId);
             starRepo.save(star);
             postRepo.incrementStars(postId);
+
+            String ownerId = postRepo.findById(postId).orElseThrow()
+                .getUserId();
+            if (!ownerId.equals(userId)) {
+                experienceService.addExp(ownerId, EXP_PER_REACTION);
+            }
+
             return true;
         }
     }

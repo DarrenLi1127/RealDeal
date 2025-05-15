@@ -1,6 +1,7 @@
 package com.realdeal.backend.post.controller;
 
 import com.realdeal.backend.authentication.service.UserProfileService;
+import com.realdeal.backend.exp.service.ExperienceService;
 import com.realdeal.backend.post.exception.AccessDeniedException;
 import com.realdeal.backend.genre.dto.GenreDTO;
 import com.realdeal.backend.genre.dto.PostGenreAssignRequest;
@@ -41,6 +42,8 @@ public class PostController {
     private final PostRepository postRepo;
     private final GenreService genreService;
     private final RecommendationService recommendationService;
+
+    private final ExperienceService experienceService;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostWithUserDTO> createPost(
