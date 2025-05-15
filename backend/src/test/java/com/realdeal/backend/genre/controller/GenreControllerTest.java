@@ -1,10 +1,13 @@
 package com.realdeal.backend.genre.controller;
 
+import com.realdeal.backend.exp.config.DailyExpFilter;
 import com.realdeal.backend.genre.model.Genre;
 import com.realdeal.backend.genre.service.GenreService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -14,7 +17,13 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(GenreController.class)
+@WebMvcTest(
+    controllers = GenreController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = DailyExpFilter.class
+    )
+)
 class GenreControllerTest {
 
     @Autowired private MockMvc mvc;
