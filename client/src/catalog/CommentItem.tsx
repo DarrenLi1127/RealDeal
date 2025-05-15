@@ -9,7 +9,6 @@ interface CommentItemProps {
     isReply?: boolean;
 }
 
-// Cache interface for comment likes
 interface LikeCacheEntry {
     liked: boolean;
     likesCount: number;

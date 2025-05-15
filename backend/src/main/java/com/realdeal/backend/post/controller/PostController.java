@@ -300,9 +300,6 @@ public class PostController {
         return ResponseEntity.ok(toDtoPage(posts, currentUserId));
     }
 
-    /* =======================================================================
-     *                    NEW   /starred/{userId}
-     * ======================================================================= */
     @GetMapping("/starred/{userId}")
     public ResponseEntity<Page<PostWithUserDTO>> starred(
         @PathVariable String userId,
@@ -325,9 +322,6 @@ public class PostController {
         return toDtoPage(result, currentUserId);
     }
 
-    /* ---------------------------------------------------------------------
-       shared helper that maps Post → PostWithUserDTO (genres + reactions)
-       ------------------------------------------------------------------- */
     private Page<PostWithUserDTO> toDtoPage(Page<Post> posts, String viewerId) {
 
         /* batch-lookup usernames */
