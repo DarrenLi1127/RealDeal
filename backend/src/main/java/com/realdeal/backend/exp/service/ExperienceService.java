@@ -31,6 +31,13 @@ public class ExperienceService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public int getLevel(String userId) {
+        return repo.findById(userId)
+            .map(UserProfile::getLevel)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
     /** give the daily bonus (once per calendar date) */
     @Transactional
     public void grantDailyLoginExp(String userId, int dailyBonus) {

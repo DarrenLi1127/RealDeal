@@ -132,7 +132,7 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
 
           <div className="modal-post-details">
             <h2 className="modal-title">{post.title}</h2>
-            <p className="modal-username">@{post.username}</p>
+            <p className="modal-username">@{post.username} <span className="user-level">Lv {post.level}</span></p>
             <p className="modal-date">{format(post.createdAt)}</p>
             <div className="modal-content-text">{post.content}</div>
 

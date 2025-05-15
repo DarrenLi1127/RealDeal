@@ -625,3 +625,23 @@
     font-size: 0.75rem;
     font-weight: 500;
 }
+
+/* .user-level {
+    margin-left: 0.25rem;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--primary);
+  } */
+.user-level{
+    margin-left: .25rem;         
+    padding: 0.125rem 0.5rem;     
+    font-size: .75rem;            
+    font-weight: 600;              
+    color: #844de9;          
+    background: #bfd0e7;           
+    border-radius: 12px;           
+    display: inline-block;
+    line-height: 1.25;
+    white-space: nowrap;
+    user-select: none;
+}

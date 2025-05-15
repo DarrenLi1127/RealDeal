@@ -274,7 +274,7 @@ const Catalog = () => {
 
                         <div className="post-content">
                             <h3 className="post-title">{p.title}</h3>
-                            <p className="post-username">@{p.username}</p>
+                            <p className="post-username">@{p.username} <span className="user-level">Lv {p.level}</span></p>
                             <p className="post-excerpt">
                                 {p.content.length > 100 ? p.content.slice(0, 100) + "…" : p.content}
                             </p>

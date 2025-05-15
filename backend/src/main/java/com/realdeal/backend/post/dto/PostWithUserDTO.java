@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 @Data
 public class PostWithUserDTO {
+  private Integer level;
   private UUID id;
   private String userId;
   private String username;
@@ -25,11 +26,12 @@ public class PostWithUserDTO {
   private boolean starred;
   private List<GenreDTO> genres;
 
-  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred, List<GenreDTO> genres) {
+  public static PostWithUserDTO fromPost(Post post, String username, Integer level, boolean liked, boolean starred, List<GenreDTO> genres) {
     PostWithUserDTO dto = new PostWithUserDTO();
     dto.setId(post.getId());
     dto.setUserId(post.getUserId());
     dto.setUsername(username);
+    dto.setLevel(level);
     dto.setTitle(post.getTitle());
     dto.setContent(post.getContent());
     dto.setImages(post.getImages().stream()
@@ -44,12 +46,12 @@ public class PostWithUserDTO {
     return dto;
   }
 
-  public static PostWithUserDTO fromPost(Post post, String username, boolean liked, boolean starred) {
-    return fromPost(post, username, liked, starred, new ArrayList<>());
+  public static PostWithUserDTO fromPost(Post post, String username, Integer level, boolean liked, boolean starred) {
+    return fromPost(post, username, level, liked, starred, new ArrayList<>());
   }
 
-  public static PostWithUserDTO fromPost(Post post, String username) {
-    return fromPost(post, username, false, false, new ArrayList<>());
+  public static PostWithUserDTO fromPost(Post post, String username, Integer level) {
+    return fromPost(post, username, level, false, false, new ArrayList<>());
   }
 
   @Data

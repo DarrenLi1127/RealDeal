@@ -45,6 +45,20 @@ public class PostController {
 
     private final ExperienceService experienceService;
 
+    private PostWithUserDTO buildDto(Post post,
+        String viewerId,
+        boolean liked,
+        boolean starred,
+        List<GenreDTO> genres) {
+
+        String username = userProfileService.getUsernameByUserId(post.getUserId());
+        int    level    = experienceService.getLevel(post.getUserId());   // CREATOR level
+
+        return PostWithUserDTO.fromPost(
+            post, username, level, liked, starred,
+            genres != null ? genres : new ArrayList<>());
+    }
+
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostWithUserDTO> createPost(
         @RequestParam String userId,
@@ -65,8 +79,9 @@ public class PostController {
                 .collect(Collectors.toList());
         }
 
-        String username = userProfileService.getUsernameByUserId(userId);
-        PostWithUserDTO dto = PostWithUserDTO.fromPost(saved, username, false, false, genreDTOs);
+        PostWithUserDTO dto =
+            buildDto(saved, userId,      // viewerId == author on creation
+                false, false, genreDTOs);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
@@ -116,7 +131,7 @@ public class PostController {
                     .map(genre -> new GenreDTO(genre.getId(), genre.getName(), genre.getDescription()))
                     .collect(Collectors.toList());
 
-                return PostWithUserDTO.fromPost(post, username, liked, starred, genreDTOs);
+                return buildDto(post, username, liked, starred, genreDTOs);
             })
             .collect(Collectors.toList());
 
@@ -167,7 +182,7 @@ public class PostController {
                     .map(genre -> new GenreDTO(genre.getId(), genre.getName(), genre.getDescription()))
                     .collect(Collectors.toList());
 
-                return PostWithUserDTO.fromPost(post, username, liked, starred, genreDTOs);
+                return buildDto(post, username, liked, starred, genreDTOs);
             })
             .collect(Collectors.toList());
 
@@ -212,7 +227,7 @@ public class PostController {
         boolean liked = reactionService.hasLiked(postId, userId);
         boolean starred = reactionService.hasStarred(postId, userId);
 
-        PostWithUserDTO dto = PostWithUserDTO.fromPost(updatedPost, username, liked, starred, genreDTOs);
+        PostWithUserDTO dto = buildDto(updatedPost, username, liked, starred, genreDTOs);
         return ResponseEntity.ok(dto);
     }
 
@@ -337,7 +352,7 @@ public class PostController {
                 .map(g -> new GenreDTO(g.getId(), g.getName(), g.getDescription()))
                 .collect(Collectors.toList());
 
-            return PostWithUserDTO.fromPost(p, username, liked, starred, genres);
+            return buildDto(p, username, liked, starred, genres);
         }).toList();
 
         return new PageImpl<>(dtoList, posts.getPageable(), posts.getTotalElements());

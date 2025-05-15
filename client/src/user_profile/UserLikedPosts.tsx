@@ -83,7 +83,7 @@ export default function UserLikedPosts() {
 
                 <div className="post-details">
                   <h3 className="post-title">{p.title}</h3>
-                  <p className="post-username">@{p.username}</p>   {/* creator */}
+                  <p className="post-username">@{p.username} <span className="user-level">Lv {p.level}</span></p>   {/* creator */}
                   <p className="post-date">{formatDate(p.createdAt)}</p>
 
                   {/* genre badges */}

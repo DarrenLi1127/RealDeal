@@ -27,6 +27,7 @@ export interface Post {
   liked: boolean;
   starred: boolean;
   genres: Genre[];
+  level: number;
 }
 
 export interface Comment {
