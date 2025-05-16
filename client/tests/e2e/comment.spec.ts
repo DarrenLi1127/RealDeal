@@ -126,7 +126,6 @@ test.describe('Comment Features', () => {
             await page.waitForSelector('.reply-form', { timeout: 5000 });
         } catch (e) {
             console.log('Reply form not appearing, taking screenshot for debug');
-            await page.screenshot({ path: 'reply-form-missing.png' });
             throw e;
         }
 
@@ -142,7 +141,6 @@ test.describe('Comment Features', () => {
             await page.waitForSelector(`.comment-content:has-text("${replyText}")`, { timeout: 5000 });
         } catch (e) {
             console.log('Reply not appearing in comments, taking screenshot');
-            await page.screenshot({ path: 'reply-missing.png' });
             throw e;
         }
 
@@ -175,8 +173,6 @@ test.describe('Comment Features', () => {
         // Get classes before clicking
         const initialLikeState = await likeButton.getAttribute('class');
 
-        // Take screenshot before clicking
-        await page.screenshot({ path: 'before-like-comment.png' });
 
         // Click the like button
         await likeButton.click();
@@ -189,8 +185,6 @@ test.describe('Comment Features', () => {
             // This empty evaluation forces a re-render
         });
 
-        // Take screenshot after clicking
-        await page.screenshot({ path: 'after-like-comment.png' });
 
         // Instead of comparing class attributes, check if the aria-label changed
         const initialAriaLabel = await likeButton.getAttribute('aria-label') || '';
@@ -233,8 +227,6 @@ test.describe('Comment Features', () => {
         const toggleButton = await page.locator('.comment-toggle-replies').first();
         const initialText = await toggleButton.textContent();
 
-        // Take screenshot before toggling
-        await page.screenshot({ path: 'before-toggle-replies.png' });
 
         // Check initial replies visibility
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -249,8 +241,6 @@ test.describe('Comment Features', () => {
         // Get the updated button text
         const updatedText = await toggleButton.textContent();
 
-        // Take screenshot after toggling
-        await page.screenshot({ path: 'after-toggle-replies.png' });
 
         // Verify the text changed (from "Hide replies" to "Show X replies" or vice versa)
         expect(updatedText).not.toEqual(initialText);

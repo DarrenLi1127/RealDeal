@@ -233,8 +233,6 @@ test.describe('Post Features', () => {
     await page.click('.post-card');
     await page.waitForSelector('.modal-overlay');
 
-    // Take screenshot before liking
-    await page.screenshot({ path: 'before-like.png' });
 
     // Click like button
     await page.click('.like-btn');
@@ -243,8 +241,6 @@ test.describe('Post Features', () => {
     // or just wait a moment for the state to update
     await page.waitForTimeout(500);
 
-    // Take screenshot after liking
-    await page.screenshot({ path: 'after-like.png' });
 
     // Click star button
     await page.click('.star-btn');
