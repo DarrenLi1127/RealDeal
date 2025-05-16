@@ -52,4 +52,68 @@ class PostServiceTest {
         Page<Post> actual = postService.getPaginatedPosts(0, 9);
         assertEquals(expected.getContent(), actual.getContent());
     }
+    @Test
+    void search_delegatesToRepoAndReturnsPagedResults() {
+        // Arrange
+        String query = "test query";
+        int page = 0;
+        int size = 10;
+        Post post = new Post();
+        List<Post> posts = List.of(post);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Mock direct repository calls instead of going through cached methods
+        when(postRepo.search(eq(query), eq(pageRequest))).thenReturn(new PageImpl<>(posts));
+        when(postRepo.search(eq(query), eq(Pageable.unpaged())))
+            .thenReturn(new PageImpl<>(List.of(), Pageable.unpaged(), 1L));
+
+        // Act
+        Page<Post> result = postService.search(query, page, size);
+
+        // Assert
+        assertEquals(posts, result.getContent());
+        assertEquals(1, result.getTotalElements());
+
+        // Verify repository was called correctly
+        verify(postRepo).search(query, pageRequest);
+        verify(postRepo).search(query, Pageable.unpaged());
+    }
+
+    @Test
+    void getSearchContent_fetchesFromRepo() {
+        // Arrange
+        String query = "test";
+        int page = 0;
+        int size = 10;
+        Post post = new Post();
+        List<Post> expectedContent = List.of(post);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Post> repoResult = new PageImpl<>(expectedContent);
+
+        when(postRepo.search(query, pageRequest)).thenReturn(repoResult);
+
+        // Act
+        List<Post> result = postService.getSearchContent(query, page, size);
+
+        // Assert
+        assertEquals(expectedContent, result);
+        verify(postRepo).search(query, pageRequest);
+    }
+
+    @Test
+    void getSearchCount_fetchesFromRepo() {
+        // Arrange
+        String query = "test";
+        long expectedCount = 42L;
+        Page<Post> page = new PageImpl<>(List.of(), Pageable.unpaged(), expectedCount);
+
+        when(postRepo.search(query, Pageable.unpaged())).thenReturn(page);
+
+        // Act
+        long result = postService.getSearchCount(query);
+
+        // Assert
+        assertEquals(expectedCount, result);
+        verify(postRepo).search(query, Pageable.unpaged());
+    }
 }
