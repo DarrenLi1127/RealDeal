@@ -248,7 +248,11 @@ const UpdateProfile = () => {
 
       <p>Update your profile information below:</p>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message" aria-label="username-error">
+          {error}
+        </div>
+      )}
 
       <div className="avatar-section">
         <img
