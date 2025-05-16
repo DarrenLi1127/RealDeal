@@ -13,7 +13,7 @@ dotenv.config();
 // Set reasonable timeout
 test.setTimeout(60000);
 
-test.describe("Post Features", () => {
+test.describe("Profile Features", () => {
   // Global setup for each test
   test.beforeEach(async ({ page }) => {
     // Setup Clerk authentication
