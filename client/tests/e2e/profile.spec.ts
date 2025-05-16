@@ -13,53 +13,6 @@ dotenv.config();
 // Set reasonable timeout
 test.setTimeout(60000);
 
-// Mock API specifically for testing genre selection
-async function mockGenresApi(page) {
-  // Mock genres endpoint to return specific genres
-  await page.route("**/api/genres", (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([
-        { id: 1, name: "Art", description: "Visual arts and paintings" },
-        {
-          id: 2,
-          name: "Music",
-          description: "Musical instruments and performances",
-        },
-        {
-          id: 3,
-          name: "Technology",
-          description: "Tech gadgets and innovations",
-        },
-        { id: 4, name: "Literature", description: "Books and writing" },
-      ]),
-    });
-  });
-
-  // Mock user's initially selected genres
-  await page.route("**/api/genres/users/**", (route) => {
-    const method = route.request().method();
-
-    // Handle PUT request for updating genres
-    if (method === "PUT") {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ success: true }),
-      });
-      return;
-    }
-
-    // For GET requests, return initial genres (just Art selected)
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([{ id: 1, name: "Art" }]),
-    });
-  });
-}
-
 test.describe("Profile Features", () => {
   // Global setup for each test
   test.beforeEach(async ({ page }) => {
@@ -80,9 +33,6 @@ test.describe("Profile Features", () => {
 
     // Setup API mocks
     await postMockApi(page);
-
-    // Setup additional genre-specific mocks
-    await mockGenresApi(page);
 
     // Wait for home page after login
     await page.waitForURL("**/home", { timeout: 10000 });
@@ -120,9 +70,6 @@ test.describe("Profile Features", () => {
 
     // Wait for page to load
     await page.waitForSelector(".genre-tags", { state: "visible" });
-
-    // Take screenshot of initial state for debugging
-    await page.screenshot({ path: "genres-initial.png" });
 
     // Verify initially "Art" is selected (should be from mock data)
     const initialSelectedGenres = await page
@@ -165,9 +112,6 @@ test.describe("Profile Features", () => {
 
     // Wait for the "Saved!" message to appear
     await page.waitForSelector(".saved-msg", { state: "visible" });
-
-    // Take screenshot of final state
-    await page.screenshot({ path: "genres-updated.png" });
   });
 
   test("user cannot select more than 3 genres", async ({ page }) => {
@@ -200,8 +144,5 @@ test.describe("Profile Features", () => {
     // Should show an error message
     const error = page.getByLabel("username-error");
     await expect(error).toContainText("You can select up to 3 genres only");
-
-    // Take screenshot of error state
-    await page.screenshot({ path: "genres-max-limit.png" });
   });
 });
