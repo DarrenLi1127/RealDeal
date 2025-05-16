@@ -138,7 +138,80 @@ npm run dev
 ```
 
 6. Access the application at http://localhost:5173
+## Testing
+### Backend unit test
+#### User Profile Tests
+- **Existence Endpoint Delegation** – verifies `/exists/{id}` simply forwards to the service and echoes the boolean result. 
+- **Existence – true / false** – confirms the controller returns the correct boolean when the service reports a user present or absent. 
+- **Fetch Profile** – asserts `/api/users/{id}` returns a populated DTO when the user exists.
+- **User Registration Happy Path** – checks that a new profile is persisted and HTTP 201 is returned. 
+- **Duplicate Email / Username Validation** – ensures the service blocks registration when either field is already taken.
 
+#### Experience Service Tests
+- **Arbitrary EXP Addition** – adds an EXP amount, verifying the user’s total and reviewer-level are updated. 
+- **Daily Login Bonus** – guarantees the “daily-login” award is granted at most once per calendar day. 
+
+#### Post Service Tests
+- **Create Post** – uploads files to S3, preserves image order, and persists the post. 
+- **Pagination Delegation** – confirms `getPaginatedPosts()` passes page/size to the repository unchanged.
+- **Full-text Search** – verifies the service forwards search terms and returns the repo’s paged result.
+- **Search Helpers** – checks helper methods for content snippets and total hit count use the correct repo calls. 
+
+#### Post Controller Tests
+- **Feed Endpoint** – asserts `/api/posts/all` maps query params, enriches posts with usernames, and returns HTTP 200 JSON.
+- **Create Endpoint** – ensures multipart `/api/posts/create` responds with a DTO and HTTP 201. 
+
+#### Reaction Service Tests
+- **Toggle Like – Add** – when not previously liked, saves a like, increments the counter and awards EXP to the owner. 
+- **Toggle Like – Remove** – removes an existing like, decrements the counter and deducts EXP.
+- **Self-Like Guard** – confirms owners receive no EXP when liking their own post. 
+- **Toggle Star – Add / Remove** – mirrors the same assertions for post stars (bookmarks). 
+
+#### Comment Tests
+- **Toggle Comment Like – Add** – adds a like and bumps the comment’s like count. 
+- **Toggle Comment Like – Remove** – removes an existing like and decrements the count.
+
+#### Genre Tests
+- **List Genres (Service)** – returns all genres sorted alphabetically.
+- **Get Genre By Id** – throws `NOT_FOUND` for unknown ids.
+- **List Genres (Controller)** – controller serialises the service list to JSON (slice test).
+
+#### Recommendation Service Tests
+- **Genre-Aware Ranking** – bubbles posts that share genres with the viewer to the top. 
+- **Null Viewer Guard** – returns the original list unchanged when no user id is provided. 
+- **No Genre Preferences** – same behaviour when the viewer has no saved genres. 
+
+#### Upload Tests
+- **S3 Upload Mechanics** – builds a unique object key, sets `PUBLIC_READ` ACL, and returns a public URL. 
+- **Controller Happy Path** – `/api/upload` responds with HTTP 200 and the URL body for a multipart file. 
+
+### Frontend e2e test
+#### Post Related
+```
+    test('user can create a post with title, content, image and genre')
+    test('user can view posts in the catalog with pagination')
+    test('user can open post details in modal')
+    test('user can search for posts')
+    test('user can like and star posts')
+    test('user can view their own posts')
+```
+#### Comment Related
+```
+    test('user can view comments on a post')
+    test('user can add a new comment to a post')
+    test('user can reply to an existing comment')
+    test('user can like a comment')
+    test('user can show and hide comment replies')
+    test('user can navigate between pages of comments')
+```
+#### Profile Related
+```
+test('user can change username')
+test('user must keep the username within 3 to 20 character')
+test('user can select and deselect genres')
+test('user cannot select more than 3 genres')
+
+```
 ## Tech Stack
 
 - **Backend**: Java 17, Spring Boot, JPA, PostgreSQL
