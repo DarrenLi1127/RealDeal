@@ -133,11 +133,11 @@ const UpdateProfile = () => {
 
   const handleGenreToggle = (genre: Genre) => {
     setForm((prev) => {
-      const isSelected = prev.selectedGenres.some(g => g.id === genre.id);
+      const isSelected = prev.selectedGenres.some((g) => g.id === genre.id);
       let newGenres: Genre[];
 
       if (isSelected) {
-        newGenres = prev.selectedGenres.filter(g => g.id !== genre.id);
+        newGenres = prev.selectedGenres.filter((g) => g.id !== genre.id);
       } else {
         if (prev.selectedGenres.length >= 3) {
           setError("You can select up to 3 genres only");
@@ -202,7 +202,7 @@ const UpdateProfile = () => {
       const genreResp = await fetch(`${API}/api/genres/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ genreIds: selectedGenres.map(g => g.id) }),
+        body: JSON.stringify({ genreIds: selectedGenres.map((g) => g.id) }),
       });
 
       if (!genreResp.ok) {
@@ -229,87 +229,95 @@ const UpdateProfile = () => {
   if (!isLoaded || loading) return <p>Loading profile…</p>;
 
   return (
-      <main className="profile-edit">
-        <div className="profile-header">
-          <h2>{greeting}</h2>
-          <Link to="/home" className="back-button">
-            <span>←</span> Back to Home
-          </Link>
+    <main className="profile-edit">
+      <div className="profile-header">
+        <h2 aria-label="greeting"> {greeting}</h2>
+        <Link to="/home" className="back-button">
+          <span>←</span> Back to Home
+        </Link>
+      </div>
+
+      {stats && (
+        <div className="exp-section">
+          <ExpBar exp={stats.experience} level={stats.level} />
+          <p className="exp-numbers">
+            {stats.experience} EXP&nbsp;•&nbsp;Level&nbsp;{stats.level}
+          </p>
         </div>
+      )}
 
-        {stats && (
-            <div className="exp-section">
-              <ExpBar exp={stats.experience} level={stats.level} />
-              <p className="exp-numbers">
-                {stats.experience} EXP&nbsp;•&nbsp;Level&nbsp;{stats.level}
-              </p>
-            </div>
-        )}
+      <p>Update your profile information below:</p>
 
-        <p>Update your profile information below:</p>
+      {error && <div className="error-message">{error}</div>}
 
-        {error && <div className="error-message">{error}</div>}
-
-        <div className="avatar-section">
-          <img
-              src={form.avatarPreview || "https://placehold.co/96x96?text=Avatar"}
-              alt="Profile picture"
-              className="avatar-preview"
-          />
-          <label className="avatar-button">
-            Change photo
-            <input
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                disabled={saving}
-                hidden
-            />
-          </label>
-        </div>
-
-        <label className="field">
-          Username
+      <div className="avatar-section">
+        <img
+          src={form.avatarPreview || "https://placehold.co/96x96?text=Avatar"}
+          alt="Profile picture"
+          className="avatar-preview"
+        />
+        <label className="avatar-button">
+          Change photo
           <input
-              value={form.username}
-              onChange={handleText}
-              disabled={saving}
-              required
+            type="file"
+            accept="image/*"
+            onChange={handleImage}
+            disabled={saving}
+            hidden
           />
-          <small className="field-hint">
-            Username must be between 3-20 characters
-          </small>
         </label>
+      </div>
 
-        <div className="genre-section">
-          <label className="field">
-            Choose your favorite genres (up to 3)
-            <div className="genre-tags">
-              {allGenres.map((genre) => (
-                  <button
-                      key={genre.id}
-                      className={`genre-tag ${
-                          form.selectedGenres.some(g => g.id === genre.id) ? "selected" : ""
-                      }`}
-                      onClick={() => handleGenreToggle(genre)}
-                      disabled={saving}
-                      type="button"
-                  >
-                    {genre.name}
-                  </button>
-              ))}
-            </div>
-          </label>
-        </div>
+      <label className="field">
+        Username
+        <input
+          value={form.username}
+          onChange={handleText}
+          disabled={saving}
+          required
+          aria-label="Username-input"
+        />
+        <small className="field-hint">
+          Username must be between 3-20 characters
+        </small>
+      </label>
 
-        <div className="button-container">
-          <button onClick={save} disabled={saving} className="save-button">
-            {saving ? "Saving…" : "Save changes"}
-          </button>
+      <div className="genre-section">
+        <label className="field">
+          Choose your favorite genres (up to 3)
+          <div className="genre-tags">
+            {allGenres.map((genre) => (
+              <button
+                key={genre.id}
+                className={`genre-tag ${
+                  form.selectedGenres.some((g) => g.id === genre.id)
+                    ? "selected"
+                    : ""
+                }`}
+                onClick={() => handleGenreToggle(genre)}
+                disabled={saving}
+                type="button"
+              >
+                {genre.name}
+              </button>
+            ))}
+          </div>
+        </label>
+      </div>
 
-          {saved && <span className="saved-msg">Saved!</span>}
-        </div>
-      </main>
+      <div className="button-container">
+        <button
+          aria-label="save-profile"
+          onClick={save}
+          disabled={saving}
+          className="save-button"
+        >
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+
+        {saved && <span className="saved-msg">Saved!</span>}
+      </div>
+    </main>
   );
 };
 
