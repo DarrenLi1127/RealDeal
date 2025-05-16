@@ -147,7 +147,7 @@ const Profile = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 required
-                                placeholder="Choose a unique username"
+                                placeholder="Choose a username"
                                 disabled={isSubmitting}
                             />
                             <small>This will be used to identify you on the platform.</small>
