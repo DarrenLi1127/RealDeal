@@ -38,9 +38,7 @@ test.describe("Post Features", () => {
     await page.waitForURL("**/home", { timeout: 10000 });
   });
 
-  test("user can create a post with title, content, image and genre", async ({
-    page,
-  }) => {
+  test("user can change username", async ({ page }) => {
     // Go to create post page
     await page.goto("/profile");
     const usernameField = page.getByLabel("Username-input");
@@ -49,5 +47,20 @@ test.describe("Post Features", () => {
     await saveChange.click();
     const greeting = page.getByLabel("greeting");
     await expect(greeting).toContainText("newUsername");
+  });
+
+  test("user mush keep the username within 3 to 20 character", async ({
+    page,
+  }) => {
+    // Go to create post page
+    await page.goto("/profile");
+    const usernameField = page.getByLabel("Username-input");
+    await usernameField.fill("12");
+    const saveChange = page.getByLabel("save-profile");
+    await saveChange.click();
+    const error = page.getByLabel("username-error");
+    await expect(error).toContainText(
+      "Username must be between 3-20 characters"
+    );
   });
 });
