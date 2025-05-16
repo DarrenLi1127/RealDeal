@@ -41,6 +41,7 @@ test.describe('Comment Features', () => {
                 // Wait for home page after login with a more generous timeout
                 await page.waitForURL('**/home', { timeout: 15000 });
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             console.log('Warning: Navigation timeout waiting for /home. Proceeding with test...');
             // Even if waiting for the URL fails, we'll try to proceed with the test
@@ -193,6 +194,7 @@ test.describe('Comment Features', () => {
 
         // Instead of comparing class attributes, check if the aria-label changed
         const initialAriaLabel = await likeButton.getAttribute('aria-label') || '';
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const newAriaLabel = await likeButton.getAttribute('aria-label') || '';
 
         const initialContent = await likeButton.textContent();
@@ -235,6 +237,7 @@ test.describe('Comment Features', () => {
         await page.screenshot({ path: 'before-toggle-replies.png' });
 
         // Check initial replies visibility
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const initialRepliesVisible = await page.isVisible('.comment-replies');
 
         // Click to toggle (either hide or show)
